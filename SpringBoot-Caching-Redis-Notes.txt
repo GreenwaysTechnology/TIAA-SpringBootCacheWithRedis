@@ -1,0 +1,1181 @@
+Session Agenda:
+
+1.Caching Abstraction && Implementation using Spring boot
+2.Redis for caching,message bus,data base, streaming......
+
+
+Caching:
+
+What is cache / Caching?
+
+In computing, a cache is a component that transparently stores data so that future requests
+for that data can be served faster.
+
+The data that is stored within a cache might be values that have been computed earlier or duplicates of original values that are stored elsewhere.
+
+Before this, you need to understand one concept, called "IO".
+
+IO - read and write.
+
+Write:
+  moving data into some place
+
+Place:
+ - In memory
+ - Disk
+ - Network Socket
+ - Processors
+ - External Storage devices.
+
+IN Memory: Random access memory :RAM.
+......................................
+- Writing data into RAM.
+
+Which is faster, but not durable.
+
+Disk:
+  -Writing data into hard disk.
+Eg:
+  file systems
+     -Databases-RDBMS
+Which is slow but durable.
+
+Network Socket:
+ -socket is entry and exit point of networks
+ -apps write data into socket via os kernal, which intern transfer data to other machines 
+  in the network.
+
+-Processors
+   you can store data inside cpu registers for faster access.
+
+- External Storage devices
+   -physical storage like pendrives,extrnal harddisk....
+   -Cloud Storage.
+
+Reading:
+ -Reading requires more responsive- end user should able to get data very very faster.
+
+Reads costs more when we talk to disk(file system,databases,remote storages) based data.
+
+How to improve read performance?
+................................
+
+if any application / users reads the same data again and again, dont hit disk every time, rather make snapeshot of that data in first hit, keeps that "IN Memory(RAM) / CPU Register"
+so that future requests served very faster : Caching
+
+Real world examples:
+
+ if application sends an sql query request to database engine.
+
+-The database engine 
+   -parses the query
+   -Query Excution plan
+   -Query will be compiled - binary image of that query
+   -Query exection - Database engine will do sys call to disk
+   -Read operation begins
+   -Results are prepared
+   -Send back to Client Applicaiton
+
+imagine, if application repeats the same process again.
+
+How to improve Network reads : WEB
+
+If web clients ask some web documents such as html,pdf,image,json,xml to the webserver.
+
+-webserver will do low level io calls-read
+
+if web clients ask the same document again and again, we need to improve performance, so that 
+HTTP protocals having feature called storing repeated content some where(IN Memory)-HTTP caching.
+///////////////////////////////////////////////////////////////////////////////////////////
+
+Hardwares :How to avoid reading data within hardware devices
+
+-Hardware cache
+A CPU cache is a hardware cache used by the central processing unit (CPU) of a computer to reduce the average cost (time or energy) to access data from the main memory. A cache is a smaller, faster memory, located closer to a processor core, which stores copies of the data from frequently used main memory locations.
+/////////////////////////////////////////////////////////////////////////////////////////////
+             
+          Caching is nothing but how to improve IO( Frequrent READ of same data) operation
+
+
+Types of Caching:
+................
+Based on implemenentations
+
+-hardward level caching
+-software level caching
+   -Disk cache -databases,filesystems....
+   -Web cache - webservers,proxy servers, cdn
+   -Memoization - Program level caching, to avoid code repationcycles(loop)
+                  - languages -pythyon,groovy,javascript-most of the functional pl
+   -Application level caching with caching components
+         -Caching in Java Apps.
+         -Spring framework abstracts away caching soultions in enterprise/micro services
+          application.
+
+-network level caching
+   -protocal based caching-TCP
+   -HTTP
+   -SMTP.
+............................................................................................
+
+How to implement caching: Cache algorthims/Policy
+
+caching is allabout io.
+
+-write 
+-read
+-Replacement / Eviction.
+
+Write Policys:
+.............
+ It defines how to interact with cache component/architecture, when application starts writing data.
+
+1.Write Through
+2.Write Around
+3.Write Back
+
+
+1.Write through pattern/policy:
+...............................
+
+1.When ever write request comes , write operation will be done in cache system.
+2.From the Cache , data will be written to Database System.
+3.Once Data is written in database successfully, acknowledgement will be sent to Client Application.
+
+4.Application has to wait until the response come from cache(not suitable for blocking apps)
+  (may be suitable for async /non blocking application).
+5.It increases latency, since cache interacts with db,db interacts with cache and app.
+
+2.Write around policy:
+.......................
+
+1.Applications write data to database directly
+2.When read requests, Application hits Cache
+3.If no data found in the cache first time, Cache loads data from Database into caching
+  system
+4.If data found in the cache , data will be returned from cache itself.
+
+3.Write Back Policy:
+...................
+
+1.Application sends write requests to Cache System, once write is completed in Cache, Acknowledgement sent to Client Application.
+
+There is background service, which starts writing data from Cache into Database Async
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
+Read Policy:
+...........
+1.Cache Hit
+2.Cache Miss
+
+
+Cache Hit:
+..........
+Cache hit means the requested data already there in the cache.
+This request can be served by simply reading the cache, which is comparatively faster
+Hit happens , subsquent calls only, first time it wont happen.
+
+
+Cache Miss:
+...........
+
+1.The data has to be recomputed or fetched from its original storage location
+
+2.A cache miss occurs either
+   2.1.Because the data was never placed in the cache,
+   2.2 Because the data was removed (“evicted”) from the cache by either the caching system itself or an external application that specifically made that eviction request.
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+Cache Replacement-Eviction Policy:
+..................................
+
+This is policy , implemented by cache providers in order to manage memory.
+
+How to clear stale /unwanted /un used data from the cache system?
+  This process or removing data from cache system is called "eviction".
+
+How to evict?
+
+-manual evication
+-automatic evication.
+  Systems like redis offers an alogorthims-TTL - Time to live.(how long data can be inside
+  System, once timeout, data will be removed automatically.
+
+In order to evit data from cache system, there are plent of algorthims.
+
+1.Bélády's algorithm
+2.First in first out (FIFO)
+3.Last in first out (LIFO) or First in last out (FILO)
+4.Least recently used (LRU)
+5.Time aware least recently used (TLRU)
+6.Most recently used (MRU)
+8.Pseudo-LRU (PLRU)
+9.Random replacement (RR)
+10.Segmented LRU (SLRU)
+12.Least-frequently used (LFU)
+13.Least frequent recently used (LFRU)
+14.LFU with dynamic aging (LFUDA)
+15.Low inter-reference recency set (LIRS)
+16.CLOCK-Pro
+17.Adaptive replacement cache (ARC)
+18.AdaptiveClimb (AC)
+19.Clock with adaptive replacement (CAR)
+20.Multi queue (MQ)
+21.Pannier: Container-based caching algorithm for compound objects
+
+
+Least recently used (LRU):
+   Redis uses this alorthim.
+
+////////////////////////////////////////////////////////////////////////////////////////////
+
+Application Caching  Soultions and Implementation:
+..................................................
+
+Application caching provides, how to store data inside application.
+
+Application caching can be classified into two types:
+.....................................................
+
+1.Local Cache
+2.Distributed Cache
+
+Both cache implementation will store data in side RAM Only.
+
+
+1.Local Cache : (Cache System) 
+ 
+ Cache is provided iniside application as "Data Structure".
+ if you are working in java application , java provides a spec called jcache
+JSR 107: JCACHE - Java Temporary Caching API
+
+ IF you  are working in spring framework, Spring framework provides an abstraction
+  "Caching Abstraction" : set of apis and annotations , developers start building caching system without worring about underlaying cache implemenation(systems-like memcache,redis,hazlecast....)
+
+
+          "Cache data is maintained inside Application Process(JVM)"
+
+Spring provides an data structure called "ConcurrentHashMapCache" 
+  -it is map datastructure
+  - used to store data inside app.
+
+
+
+Note:
+
+  In any caching system, data is stored in side data structure only : KEY-VALUE pair datastructure : Dictionary/HashMap/Map
+   This is fundamental storage model of any caching system.
+.............................................................................................
+
+2.Distributed Cache /Data Grid
+
+    Cache data is maintained outside application process(JVM).
+
+///////////////////////////////////////////////////////////////////////////////////////////
+
+Caching best practices:
+.......................
+
+Local Cache:
+ -Part of application
+ -easy to implement
+ -very fast, no lantency.
+-as application shuts down, no where data is persisted.
+-it is diffcult in concurrency
+-data cant be replicated
+-heap size will increase , if you store more data.
+-Avoid big heaps just for caching
+-Big heap leads to long major GCs
+
+
+Distributed Cache:
+ -outside application process
+ -it is easy to scale across clusters of nodes.
+ -it is easy to make highly  available.
+ -It is persisted-you can save data across time.
+etc.......
+
+
+Use a distributed cache for big amounts of data
+
+Distributed caches implemented cache nodes.
+
+Cache Nodes:
+
+1.Hazelcast
+2.Redis
+3.memcached
+4.Appache zoo keeper
+5.Generic.
+6.EhCache 2. x.
+7.Infinispan
+//////////////////////////////////////////////////////////////////////////////////////////////
+
+Application Caching Implementation using Spring Boot caching Abstraction:
+.........................................................................
+
+1.Spring boot can support local and distributed cache providers
+2.Spring boot offers abstraction apis to work with any cache providers without changing app
+  code, you can switch any provider any time.
+3.Spring boot uses cache starter packages.
+
+Spring boot Caching Architecture:
+.................................
+     				       Application
+				   (Caching Abstraction)
+					   |
+				      CacheManager
+					   |
+				---------------------------------- Cache Providers
+				|  |   |  |                       |
+	                       LocalCache / Distributed
+				   |              |
+			     ConcurrentHashMap	  Redis,MemCache,EHCach,Haelzcast......
+
+
+
+Spring Application Setup and how to employ caching.
+...................................................
+
+Application Req:
+ -It could be simple Databse CURD app
+ -It could be complex microservice application.
+
+App settings:
+
+Lab Guide:
+
+1.go to 
+https://start.spring.io/
+
+2.Add springweb,springdata,springcache dependencies
+
+pom.xml
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-cache</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+  	     <dependency>
+           	 <groupId>com.h2database</groupId>
+            	<artifactId>h2</artifactId>
+       	     </dependency>
+
+2.create entity,Repository,Services,Rest End point.
+
+Entity
+Book.java
+package com.example.entity;
+import javax.persistence.*;
+import java.io.Serializable;
+
+@Entity
+public class Book {
+    @Id
+    @GeneratedValue
+    private long id;
+    private String name;
+    private String category;
+    private String author;
+    private String publisher;
+    private String edition;
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(String author) {
+        this.author = author;
+    }
+
+    public String getPublisher() {
+        return publisher;
+    }
+
+    public void setPublisher(String publisher) {
+        this.publisher = publisher;
+    }
+
+    public String getEdition() {
+        return edition;
+    }
+
+    public void setEdition(String edition) {
+        this.edition = edition;
+    }
+
+    @Override
+    public String toString() {
+        return "Book{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", category='" + category + '\'' +
+                ", author='" + author + '\'' +
+                ", publisher='" + publisher + '\'' +
+                ", edition='" + edition + '\'' +
+                '}';
+    }
+}
+.........................................................................................
+
+JPA implemenation:
+.................
+
+package com.example.repo;
+import com.example.entity.Book;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import javax.transaction.Transactional;
+
+public interface BookRepository extends JpaRepository<Book, Long> {
+    @Transactional
+    @Modifying
+    @Query("update Book u set u.name=?2 where u.id=?1")
+    int updateAddress(long id, String name);
+}
+........................................................................................
+
+Service Implemenation:
+
+
+package com.example.service;
+
+
+import com.example.entity.Book;
+
+public interface BookService {
+    Book addBook(Book book);
+
+    Book updateBook(Book book);
+
+    Book getBook(long id);
+
+    String deleteBook(long id);
+}
+
+package com.example.service;
+
+import com.example.entity.Book;
+import com.example.repo.BookRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.stereotype.Service;
+
+import java.util.Optional;
+
+@Service
+public class BookServiceImpl implements BookService {
+
+    private static final Logger logger = LoggerFactory.getLogger(BookServiceImpl.class);
+    @Autowired
+    private BookRepository bookRepository;
+
+    @Override
+    public Book addBook(Book book) {
+        logger.info("adding book with id - {}", book.getId());
+        return bookRepository.save(book);
+    }
+
+
+    @Override
+    public Book updateBook(Book book) {
+        bookRepository.updateAddress(book.getId(), book.getName());
+        logger.info("book updated with new name");
+        return book;
+    }
+
+    @Override
+    public Book getBook(long id) {
+        logger.info("fetching book from db");
+        Optional<Book> book = bookRepository.findById(id);
+        if (book.isPresent()) {
+            return book.get();
+        } else {
+            return new Book();
+        }
+    }
+
+    @Override
+    public String deleteBook(long id) {
+        bookRepository.deleteById(id);
+        return "Book deleted";
+    }
+}
+..........................................................................................
+
+Controller
+
+package com.example.api;
+
+import com.example.entity.Book;
+import com.example.service.BookService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+
+@RestController
+public class BooksController {
+
+    @Autowired
+    private BookService bookService;
+
+    @PostMapping("/book")
+    public Book addBook(@RequestBody Book book) {
+        return bookService.addBook(book);
+    }
+
+    @PutMapping("/book")
+    public Book updateBook(@RequestBody Book book) {
+        return bookService.updateBook(book);
+    }
+
+    @GetMapping("/book/{id}")
+    public Book getBook(@PathVariable long id) {
+        return bookService.getBook(id);
+    }
+
+    @DeleteMapping("/book/{id}")
+    public String deleteBook(@PathVariable long id) {
+        return bookService.deleteBook(id);
+    }
+}
+...........................................................................................
+Main Application with Data:
+
+package com.example;
+
+import com.example.entity.Book;
+import com.example.repo.BookRepository;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+
+@SpringBootApplication
+public class MycacheAppApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(MycacheAppApplication.class, args);
+    }
+
+    @Bean
+    CommandLineRunner runner(BookRepository bookRepository) {
+        return args -> {
+            Book book = null;
+            for (int i = 0; i < 10; i++) {
+                book = new Book();
+                book.setAuthor("Author " + i);
+                book.setCategory("Caching " + i);
+                book.setEdition(i + "nd edition ");
+                book.setName("Caching in Action " + i);
+                book.setPublisher("my Publisher " + i);
+                bookRepository.save(book);
+            }
+            bookRepository.findAll().forEach(System.out::println);
+
+        };
+    }
+}
+/////////////////////////////////////////////////////////////////////////////////////
+
+Test:
+http://localhost:8080/book/1
+
+you will get book information
+
+{
+id: 1,
+name: "Caching in Action 0",
+category: "Caching 0",
+author: "Author 0",
+publisher: "my Publisher 0",
+edition: "0nd edition "
+}
+
+ browser-----controller----service---repo---db
+
+Again if hit the same book,http://localhost:8080/book/1
+
+The flow will go like above
+///////////////////////////////////////////////////////////////////////////////////////////
+
+Caching integration:
+....................
+
+Declarative Annotation-based Caching
+
+For caching declaration, Spring’s caching abstraction provides a set of Java annotations:
+
+@EnableCaching - Enable caching behaviour to the application
+
+@Cacheable: Triggers cache population.
+
+@CacheEvict: Triggers cache eviction.
+
+@CachePut: Updates the cache without interfering with the method execution.
+
+@Caching: Regroups multiple cache operations to be applied on a method.
+
+@CacheConfig: Shares some common cache-related settings at class-level.
+...........................................................................................
+
+
+@EnableCaching - Enable caching behaviour to the application
+
+-Can be added at top level- in the Main program or
+-Can be created a separate Configuration file where you can add.
+
+Spring Boot CacheProvider:
+...........................
+
+Hope you can understand how spring boot works-AutoConfiguration
+
+Caching Auto-configuration
+The Spring Boot Framework simplifies the implementation of caching by auto-configuration support. 
+
+It searches for the libraries and configuration-files in the classpath and initializes the required dependency beans at the time of application startup
+
+The auto-configuration of caching includes the following steps:
+***************************************************************
+1.Add the annotation @EnableCaching in the configuration file.
+2.Add the required caching libraries in the classpath.
+
+Where to start?
+
+1.Setup Project and open Project.
+
+2.Goto Spring boot - external libs--->spring.boot.autoconfigure--->spring factories--search---cache auto configuration-- select that--press Ctrl+N -->CacheAutoConfiguration.
+Again
+ goto
+  org.springframework.boot.autoconfigure.cache.
+   you can find cache providers informations...
+
+Cache Properties:
+Redis
+ spring.cache.redis.timetolive
+ spring.cache.redis.keyPrefix
+
+How selects provider:
+.....................
+
+Spring Boot tries to detect the following providers (in this order):
+
+1.Generic
+2.EhCache 2.x
+3.Hazelcast
+4.Infinispan
+5.JCache (JSR-107)
+6.Redis
+7.Guava
+8.Simple
+
+It is also possible to force the cache provider to use via the spring.cache.type property.
+if you want to setup cache provider in application.properties or application.yaml
+
+ spring.cache.type =provider
+
+
+eg:
+EhCache 2.x
+
+<dependency>  
+<groupId>org.ehcache</groupId>  
+<artifactId>ehcache</artifactId>  
+</dependency>  
+
+
+EhCache 2.x is used if a file named ehcache.xml can be found at the root of the classpath. If EhCache 2.x and such file is present it is used to bootstrap the cache manager. An alternate configuration file can be provide a well using:
+
+spring.cache.ehcache.config=classpath:config/another-config.xml
+
+Simple
+If none of these options worked out, a simple implementation using ConcurrentHashMap as cache store is configured. This is the default if no caching library is present in your application.
+
+Note : default is jdk concurrentHashMap only.
+
+///////////////////////////////////////////////////////////////////////////////////////////
+
+How and where caching features are applied.
+...........................................
+
+ Caching features are added on top of biz apis - find,update,delete
+
+
+At its core, the cache abstraction applies caching to Java methods, thus reducing the number of executions based on the information available in the cache.
+
+That is, each time a targeted method is invoked, the abstraction applies a caching behavior that checks whether the method has been already executed for the given arguments.
+
+If it has been executed, the cached result is returned without having to execute the actual method.
+
+ If the method has not been executed, then it is executed, and the result is cached and returned to the user so that, the next time the method is invoked the cached result is returned.
+
+This way, expensive methods (whether CPU- or IO-bound) can be executed only once for a given set of parameters and the result reused without having to actually execute the method again
+
+The caching logic is applied transparently without any interference to the invoker.
+
+"This approach works only for methods that are guaranteed to return the same output (result) for a given input (or arguments) no matter how many times it is executed."
+
+........................................................................................
+
+Annotations overview:
+.....................
+
+@Cachable:
+As the name implies, you can use @Cacheable to demarcate methods that are cacheable 
+-that is, methods for which the result is stored in the cache so that, on subsequent invocations (with the same arguments), the value in the cache is returned without having to actually execute the method.
+
+parameterize it with the name of the cache where the results would be stored.
+
+eg:
+@Cacheable("books")
+public Book findBook(ISBN isbn) {...}
+
+The findBook() call will first check the cache books before actually invoking the method and then caching the result.
+
+-In the preceding snippet, the findBook method is associated with the cache named books.
+
+-Each time the method is called, the cache is checked to see whether the invocation has already been executed and does not have to be repeated.
+
+-While in most cases, only one cache is declared, the annotation lets multiple names be specified so that more than one cache is being use.
+
+-. In this case, each of the caches is checked before executing the method — if at least one cache is hit, the associated value is returned.
+
+"
+
+Eg:
+    @Override
+    //now this method will executed only if cache miss, if cache hit, method wont be executed
+    @Cacheable("books")
+    public Book getBook(long id) {
+        logger.info("fetching book from db");
+        Optional<Book> book = bookRepository.findById(id);
+        if (book.isPresent()) {
+            return book.get();
+        } else {
+            return new Book();
+        }
+    }
+
+ConcurrentHashMap books = new ConcurrentHashMap();
+books.put(key,value);
+
+Multiple cach names:
+...................
+The following example uses @Cacheable on the findBook method:
+
+@Cacheable({"books", "isbns"})
+public Book findBook(ISBN isbn) {...}
+
+In this case, if any of the caches contains the required result, the result is returned and the method is not invoked.
+
+eg:
+    @Override
+    @Cacheable(cacheNames = {"books", "isbns"})
+    public Book getBook(long id) {
+        logger.info("fetching book from db");
+        Optional<Book> book = bookRepository.findById(id);
+        if (book.isPresent()) {
+            return book.get();
+        } else {
+            return new Book();
+        }
+    }
+
+////////////////////////////////////////////////////////////////////////////////////////////
+
+How Spring boot sends cached data to Cache Provider? How data is indentified in caching?
+
+-You need unique indentification.
+
+Key-Value Store:
+
+ All cache implementation uses , key-value stores internally.
+ Each invocation of a cached method needs to be translated into a suitable key for cache  access
+
+ConcurrentHashMap books = new ConcurrentHashMap();
+books.put(key,value);
+
+
+KeyGenerator:
+
+-This is responsible for generating every key for each data item in the cache, which would be used to lookup the data item on retrieval.
+
+-The default implementation here is the SimpleKeyGenerator – which uses the method parameters provided to generate a key
+
+The default key generator
+
+By default, SimpleKeyGenerator in the org.springframework.cache.interceptor package, an implementation of KeyGenerator interface, is used to generate the cache key
+
+SimpleKeyGenerator evaluates parameters of the cache annotated methods (by @Cachable, @CachePut and @CacheEvict). If only one non-null param is existing, it returns the param itself, otherwise the below SimpleKey's toString() method is used for computing all params
+
+@Override
+public String toString() {  
+    return getClass().getSimpleName() + " [" + StringUtils.arrayToCommaDelimitedString(this.params) + "]";
+}
+
+Default Key Generation
+
+The caching abstraction uses a simple KeyGenerator based on the following algorithm.
+
+-If no params are given, return SimpleKey.EMPTY.
+
+-If only one param is given, return that instance.
+
+-If more than one param is given, return a SimpleKey that contains all parameters
+
+
+   @Cacheable("books")
+    public Book getBook(long id) {
+        logger.info("fetching book from db");
+        Optional<Book> book = bookRepository.findById(id);
+        if (book.isPresent()) {
+            return book.get();
+        } else {
+            return new Book();
+        }
+    }
+
+ConcurrentHashMap books = new ConcurrentHashMap();
+books.put(1,book);
+
+
+Default Key Generation code
+
+public class CustomKeyGenerator implements KeyGenerator {
+
+ @Override
+ public Object generate(Object target, Method method, Object...params) {
+  return generateKey(params);
+ }
+
+ /**
+  * Generate a key based on the specified parameters.
+  */
+ public static Object generateKey(Object...params) {
+  if (params.length == 0) {
+   return CustomCacheKey.EMPTY;
+  }
+  if (params.length == 1) {
+   Object param = params[0];
+   if (param != null && !param.getClass().isArray()) {
+    return param;
+   }
+  }
+  return new CustomCacheKey(params);
+ }
+}
+////////////////////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+IS it Recommended to use default key generation ?
+
+No!
+Because it may cause unexpected key collisions.
+
+Recommended use keys parameters:
+
+The @Cacheable annotation lets you specify how the key
+ is generated through its key attribute
+
+@Cacheable(cacheNames="books", key="#isbn")
+public Book findBook(ISBN isbn, boolean checkWarehouse, boolean includeUsed)
+
+# - spring expression language syntax.
+isbn - key reference. here we are using entire object as key.
+
+Eg:
+
+    @Cacheable(cacheNames = {"books"}, key = "#id")
+    public Book getBook(long id) {
+        logger.info("fetching book from db");
+        Optional<Book> book = bookRepository.findById(id);
+        if (book.isPresent()) {
+            return book.get();
+        } else {
+            return new Book();
+        }
+    }
+
+Note:
+ISBN isbn and key="#isbn" should match.
+
+@Cacheable(cacheNames="books", key="#isbn.rawNumber")
+public Book findBook(ISBN isbn, boolean checkWarehouse, boolean includeUsed)
+Here we are taking isbn.rawNumber which is one of the field value for cache.
+
+////////////////////////////////////////////*********************////////////////////////////
+
+Conditional Based Caching:
+..........................
+
+Use case:
+ What if i dont want to cache every thing i mean , i need to cache only few values 
+based on some condtion.
+
+The cache annotations support such functionality through the condition parameter, which takes a SpEL expression that is evaluated to either true or false.
+If true, the method is cached. If not, it
+
+@Cacheable(cacheNames="book", condition="#name.length() < 32") 
+public Book findBook(String name)
+
+//conditional : cache only books whose id greater than 5
+    @Override
+    @Cacheable(cacheNames = "books", condition = "#id>5 ")
+    public Book getBook(long id) {
+        logger.info("fetching book from db" + id);
+        Optional<Book> book = bookRepository.findById(id);
+        if (book.isPresent()) {
+            return book.get();
+        } else {
+            return new Book();
+        }
+    }
+
+
+&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+Multi threading and caching:
+
+ if  a  method is by multiple thread of execution , there might be inconsistency in data reterival.
+
+
+Synchronized caching
+
+In a multi-threaded environment, certain operations might be concurrently invoked for the same argument (typically on startup). By default, the cache abstraction does not lock anything and the same value may be computed several times, defeating the purpose of caching.
+
+For those particular cases, the sync attribute can be used to instruct the underlying cache provider to lock the cache entry while the value is being computed. As a result, only one thread will be busy computing the value while the others are blocked until the entry is updated in the cache.
+
+@Cacheable(cacheNames="foos", sync=true)
+public Foo executeExpensiveOperation(String id) {...}
+
+This is an optional feature and your favorite cache library may not support it. All CacheManager implementations provided by the core framework support it. Check the documentation of your cache provider for more details.
+////////////////////////////////////////////////////////////////////////////////////////////
+
+How to update Cache?
+....................
+
+In order to avoid inconsistency between database and cache during data updates in the database.
+
+When ever we update database, we need to update cache provider also.
+
+                                      update cache as well
+                                          |
+ Client---------PUT------------api-----service---Repo---db
+
+@CachePut:
+-When the cache needs to be updated without interfering with the method execution, you can use the @CachePut annotation.
+
+
+  @Override
+    @CachePut(cacheNames = "books", key = "#book.id")
+    public Book updateBook(Book book) {
+        bookRepository.updateAddress(book.getId(), book.getName());
+        logger.info("book updated with new name");
+        return book;
+    }
+/////////////////////////////////////////////////////////////////////////////////////////////
+How to evit data from cache?
+ -Via code
+ -automatic
+
+When ever we remove record from databse , we need to remove key from cache also.
+
+                                      Delete from cache as well
+                                          |
+ Client---------DELTE------------api-----service---Repo---db
+
+How to remove cache Entries?
+
+@CacheEvict annotation:
+.......................
+The cache abstraction allows not just population of a cache store but also eviction
+
+This process is useful for removing stale or unused data from the cache.
+
+ Opposed to @Cacheable, annotation @CacheEvict demarcates methods that perform cache eviction, that is methods that act as triggers for removing data from the cache. 
+
+Just like its sibling, @CacheEvict requires specifying one (or multiple) caches that are affected by the action, allows a custom cache and key resolution or a condition to be specified but in addition, features an extra parameter allEntries which indicates whether a cache-wide eviction needs to be performed rather then just an entry one (based on the key):
+
+@CacheEvict(cacheNames="books", allEntries=true)
+public void loadBooks(InputStream batch)
+
+
+    @Override
+    @CacheEvict(cacheNames = "books", key = "#id" ,allEntries = true)
+    public String deleteBook(long id) {
+        bookRepository.deleteById(id);
+        return "Book deleted";
+    }
+////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+@Caching:
+
+Use case , what if i want to apply different caching on single method
+like having two different CacheEvit Policy.
+
+Sometimes, multiple annotations of the same type (such as @CacheEvict or @CachePut) need to be specified — for example, because the condition or the key expression is different between different caches. @Caching lets multiple nested @Cacheable, @CachePut, and @CacheEvict annotations be used on the same method. The following example uses two @CacheEvict annotations
+
+
+@Caching(evict = { @CacheEvict("primary"), @CacheEvict(cacheNames="secondary", key="#p0") })
+public Book importBooks(String deposit, Date date)
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+@CacheConfig annotation
+
+So far we have seen that caching operations offered many customization options and these can be set on an operation basis. 
+
+However, some of the customization options can be tedious to configure if they apply to all operations of the class. For instance, specifying the name of the cache to use for every cache operation of the class could be replaced by a single class-level definition.
+This is where @CacheConfig comes into play.
+
+@CacheConfig("books")
+public class BookRepositoryImpl implements BookRepository {
+
+    @Cacheable
+    public Book findBook(ISBN isbn) {...}
+}
+
+eg:
+package com.example.service;
+
+import com.example.entity.Book;
+import com.example.repo.BookRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+
+import java.util.Optional;
+
+@Service
+@CacheConfig(cacheNames = "books")
+public class BookServiceImpl implements BookService {
+
+    private static final Logger logger = LoggerFactory.getLogger(BookServiceImpl.class);
+    @Autowired
+    private BookRepository bookRepository;
+
+    @Override
+    public Book addBook(Book book) {
+        logger.info("adding book with id - {}", book.getId());
+        return bookRepository.save(book);
+    }
+
+
+    @Override
+    @CachePut(key = "#book.id")
+    public Book updateBook(Book book) {
+        bookRepository.updateAddress(book.getId(), book.getName());
+        logger.info("book updated with new name");
+        return book;
+    }
+
+    //   @Override
+    //now this method will executed only if cache miss, if cache hit, method wont be executed
+//    @Cacheable(cacheNames = {"books", "isbns"})
+//    public Book getBook(long id) {
+//        logger.info("fetching book from db");
+//        Optional<Book> book = bookRepository.findById(id);
+//        if (book.isPresent()) {
+//            return book.get();
+//        } else {
+//            return new Book();
+//        }
+//    }
+
+    @Override
+    @Cacheable(key = "#id")
+    public Book getBook(long id) {
+        logger.info("fetching book from db");
+        Optional<Book> book = bookRepository.findById(id);
+        if (book.isPresent()) {
+            return book.get();
+        } else {
+            return new Book();
+        }
+    }
+    //conditional : cache only books whose id greater than 5
+//    @Override
+//    @Cacheable(cacheNames = "books", condition = "#id>5 ")
+//    public Book getBook(long id) {
+//        logger.info("fetching book from db" + id);
+//        Optional<Book> book = bookRepository.findById(id);
+//        if (book.isPresent()) {
+//            return book.get();
+//        } else {
+//            return new Book();
+//        }
+//    }
+
+//    @Override
+//    @Cacheable(cacheNames = "books",  unless = "#id==3")
+//    public Book getBook(long id) {
+//        logger.info("fetching book from db" + id);
+//        Optional<Book> book = bookRepository.findById(id);
+//        if (book.isPresent()) {
+//            return book.get();
+//        } else {
+//            return new Book();
+//        }
+//    }
+
+    @Override
+    @CacheEvict(key = "#id", allEntries = true)
+    public String deleteBook(long id) {
+        bookRepository.deleteById(id);
+        return "Book deleted";
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
