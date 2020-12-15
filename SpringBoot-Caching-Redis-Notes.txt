@@ -194,7 +194,7 @@ Cache Replacement-Eviction Policy:
 This is policy , implemented by cache providers in order to manage memory.
 
 How to clear stale /unwanted /un used data from the cache system?
-  This process or removing data from cache system is called "eviction".
+  This process of removing data from cache system is called "eviction".
 
 How to evict?
 
@@ -1168,6 +1168,1114 @@ public class BookServiceImpl implements BookService {
         return "Book deleted";
     }
 }
+//////////////////////////////////////////////////////////////////////////////////////////////
+
+                                         Redis
+
+
+What Redis Stands For?
+
+  Remote Dictionary Server.
+
+History of Redis:
+
+ Redis was developed by a developer Salvatore Sanfilippo, who released on May 10, 2009.
+
+What is Redis?
+  Redis is an in-memory data structure store, used as a distributed, in-memory key–value database, cache ,message broker.
+
+in-memory : 
+   Data is stored in RAM.
+
+Distributed
+   Data can be replicated across multiple instances of process(redis).
+
+database:
+  The place where we can store data.
+
+Use cases of Redis:
+
+-Distributed Enterprise cache system.
+-Message broker - like RabitMQ,Kaffa
+-Used as NoSql database.
+
+///////////////////////////////////////////////////////////////////////////////////////////
+
+Redis as NoSql Database:
+........................
+
+Data Storage Models:
+
+-File system
+-DBMS
+-RDBMS- Based Relational Algerba theory proposed by Dr.Codd
+IBM invented a language to talk to RDBMS - SQL
+
+-Storing data in the form of tables.
+ which is structure which stores data in the row-colum 
+
+ row defins data
+
+ column defines indentifier for data.
+
+ column
+ |
+ id    username   password 
+ 1      admin      root  -row
+
+In RDBMS, data is grouped under tables,views- database objects.
+Database objects are groued under one object called schema(database).
+Many schemas can be groued inside a process -  Database Instance.
+
+RDBMS has been good for lot of use case for more than 4 decades, after 2005,many biz uses
+cases required different data models.
+
+RDBMS Drawbacks:
+
+1.Properity Solution
+  Like Oracle,IBM,SQL Server - Single vendor
+2.Fixed schema objects
+   once table is designed, after adding huge amount of data, if you want to add new column /
+   delete column.
+3.Open source soultions
+
+4.Dynamic raw data.
+   i want to store comments ,ratings about the particular product.
+
+Birth of NOSQL:
+
+ -Open source soultions
+ -Dynamic schema
+***********************************************XXXXXXXXX**********************************
+Types of NOSQL Databases:
+........................
+
+ column
+ |
+ id    username   password 
+ 1      admin      root  -row
+
+id is column
+username is column
+password is column.
+1 value
+admin value
+root value
+
+Different kind of data models in NoSQL are : 
+- Key-Value
+- Document 
+- Column Family
+- Graph 
+
+Key-Value:
+...........
+
+ ->It is one of the data structure 
+    ->Dictionary
+    ->Map
+
+Data Structure :
+   Store data using some structure.
+
+eg:
+   int id=1
+   String userName="admin"
+   String password ="root"
+ 
+ Single Dimension:
+
+  User [] users = {new User(),new User()}
+  List<User> users= Arrays.asList(new User(),new User())
+ Two dimension:
+    key,value
+  HashMap map = new HashMap();
+  map.put("id",1)
+  map.put("name","admin") - key-value
+ 
+    
+Relational model to Key-Value:
+..............................
+
+1.in relational model data is indentified by primary key.
+
+
+  id - 1 ----- user name - vlaue  pass word -value. - row
+
+2.collection of data is indentied by table name
+
+  users
+   id    username   password 
+   1      admin      root 
+   2      root       super
+
+how to read data
+   users.id ---> 
+ select id,username,password from users where id=1
+.........................................................................................
+
+ objectname:identifier:column
+
+eg:
+      
+          key         value
+           |
+     users:1:id         1
+     users:1:username  admin
+     users:1:password  root
+
+     users:2:id        2
+     users:2:username  root
+     users:2:password  super
+
+     users:3:id        3
+     users:3:username  subu
+     users:3:password  foo
+     users:3:otp       ""
+
+ read data
+
+     $>users:3:otp
+     12345
+    
+&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+
+Document Oriented Data Model:
+...............................
+
+Data is stored inside datastore as document.
+
+Document is collection of data.
+
+Document can be any thing.
+
+Types of document
+
+1.structure document
+2.unstructure document.
+
+structure document has some structures.
+
+-SGML
+-HTML
+Data oriented documents
+-XML
+-JSON
+-Properties
+-YAML
+
+JSON
+{
+    "FirstName": "Bob", 
+    "Address": "5 Oak St.", 
+    "Hobby": "sailing"
+}
+
+XML
+<contact>
+    <firstname>Bob</firstname>
+    <lastname>Smith</lastname>
+    <phone type="Cell">(123) 555-0178</phone>
+    <phone type="Work">(890) 555-0133</phone>
+    <address>
+      <type>Home</type>
+      <street1>123 Back St.</street1>
+      <city>Boys</city>
+      <state>AR</state>
+      <zip>32225</zip>
+      <country>US</country>
+    </address>
+  </contact>
+
+How to store document into database?
+ Birth of document oriented
+
+Mongodb
+...........................................................................................
+
+Column-Family:
+..............
+
+ {
+   12345: {
+     profile:{}
+     orders:{}
+
+   }
+     
+ }
+
+ invoice:1234:profile   id 1 name xxx address xxx
+///////////////////////////////////////////////////////////////////////////////////////////
+
+Graph database:
+
+ collection of inter connected nodes , each node defines its own data.
+
+Neo4j:
+............................................................................................
+
+Redis Architecture:
+...................
+
+->Redis is written in c language.
+->Redis has been distributed to various platforms
+->Redis is distributed in two flavours
+  -Open Source
+     redis.io
+  -Commerical
+    https://redislabs.com/
+
+->Redis is distributed to BSD,linux operating systems only, no windows distribution.
+  -How to use redis on windows
+     ->Via VM - inside vm , you can have linux
+     ->Via docker easy to use.
+     ->Via windows Linux subsystem.
+
+
+->Redis supports non blocking /Async arch
+   Linux provides kernal lib called - epoll
+
+
+
+suppose if you are using on linux
+
+ -source code distribution
+
+ -installer - not recommended
+
+
+Redis storage Model:
+
+-Redis stores data in mememory -RAM , it never stores data in disk.
+-Redis is the first fastest INMEMORY data Store.
+-Redis stores data in the form of "Key-Value" Pair Model.
+-Redis is powered by "Data Structures"
+
+Data Structure Supported by Redis:
+..................................
+ Dictionary
+    key -value
+
+When you define key, you can tell the data type of key.
+
+When you define value, value type must be defined.
+
+Value Types:
+............
+1.String
+2.List
+3.Hash
+4.Set
+5.SortedSet
+6.bitMap
+7.hyperloglog
+8.Geospatial
+
+Value types define, how many values can be stored in a single given key.
+
+eg:
+   key              value
+
+   id                1        -Single value /Scallar
+
+   name             Subramanian  -Single value /scallar
+
+   skills           java,redis,microservices  ---- List of values - List  
+
+   address          street:'10thstreet',city:'Coimbatore'  -Hash
+
+   hitcount         1,2,1,2,3,3,4,5,6 -> 1,2,3,4,5,6   -Set - Like List without duplicates
+
+   sequences        34,1,2,5,5,3,2 -> 1,2,3,5,34   -Sorted Set - Like List without duplicates                                                                 + sorting
+  
+////////////////////////////////////////////////////////////////////////////////////////////
+
+Redis features:
+
+1.for development
+ how to store ,reterive, process datas
+ datatypes
+ commands
+ pipelining
+ transactions
+ pub-sub pattern- message broker
+ scripting -lua scripting -- plsql
+
+
+2.for adminstrations
+-how to start server in standalone.
+-how to start server in master-replica - scalability - distributed
+-how to start server in master-replicat with highavailablity - clusters,sentinals
+-security - acl,ssl...
+-Monitoring
+  -memory manangement
+  -client management
+  -health managment
+-configuration
+   -many configurations details
+-Persistency.
+
+
+3.How to extend redis core functionality.
+  
+Redis allows to add more features apart from core redis distribution.
+
+Redis modules:
+  plugable code, can be added to enchance redis
+
+eg:
+ can i store json document into redis?
+   No
+ but is possible via redis modules.
+
+Popular Modules:
+
+1.RedisSearch
+2.RedisJson
+3.RedisGraph
+4.RedisTimeSeries
+//////////////////////////////////////////////////////////////////////////////////////////////
+
+Redis components:
+
+1.Redis Server
+
+  Provided by redis.io/redis labs
+
+2.Redis Clients
+ Most of the programming languages supports client libs
+
+Java:
+-Jedis
+-lettuce
+-Spring provides spring-data-redis - which runs on either jedis,lettuce
+
+CommandLine clients:
+ redis-cli ; cli tool for testing and prototyping , administration...
+
+////////////////////////////////////////////////////////////////////////////////////////////
+
+Lets Program with Redis:
+.......................
+
+Setup:
+......
+
+1.Using docker.
+
+ docker run -–name redis -p 6379:6379 redis
+
+The default port ; 6379.
+
+Redis where stores data.
+ inside database.
+
+Redis process supports by default 16 databases,each database is named by number like 0...15
+database[0]>
+
+How to run redis-cli?
+
+docker exec -it redis redis-cli
+ 
+////////////////////////////////////////////////////////////////////////////////////////////
+
+Rediscli is client which communicates redis server via "RedisProtocol"
+
+In RDBMS , Database clients send request, and server returns response.
+
+request could be "Commands" - SQL commands 
+ -DDL  - create,grant,revoke\ 
+ -DML   - Select,insert,update
+ -DCL   - commit,set save point
+
+response would be , rows,or error,no of rows affected...
+
+IN Redis
+  Clients will send Commands , server will return response.
+
+Redis offers lot of commands based on datatype,administration,utitlity category.
+
+How to test server is working or not? : health checking.
+
+127.0.0.1:6379> ping
+PONG
+127.0.0.1:6379> ping "Hello Redis!"
+"Hello Redis!"
+127.0.0.1:6379>
+
+How to get Server info?
+
+127.0.0.1:6379> INFO
+# Server
+redis_version:6.0.4
+redis_git_sha1:00000000
+redis_git_dirty:0
+redis_build_id:d5d470262d47f1a0
+redis_mode:standalone
+os:Linux 4.19.121-linuxkit x86_64
+arch_bits:64
+multiplexing_api:epoll
+atomicvar_api:atomic-builtin
+gcc_version:8.3.0
+process_id:1
+run_id:84ea3a2dc0e6a9606b54cc39f906803e7d22a027
+tcp_port:6379
+uptime_in_seconds:368
+uptime_in_days:0
+hz:10
+configured_hz:10
+lru_clock:14188345
+executable:/data/redis-server
+config_file:
+
+# Clients
+connected_clients:2
+client_recent_max_input_buffer:2
+client_recent_max_output_buffer:0
+blocked_clients:0
+tracking_clients:0
+clients_in_timeout_table:0
+
+# Memory
+used_memory:887288
+used_memory_human:866.49K
+used_memory_rss:7561216
+used_memory_rss_human:7.21M
+used_memory_peak:887288
+used_memory_peak_human:866.49K
+used_memory_peak_perc:100.00%
+used_memory_overhead:836820
+used_memory_startup:802848
+used_memory_dataset:50468
+used_memory_dataset_perc:59.77%
+allocator_allocated:1178984
+allocator_active:1433600
+allocator_resident:3796992
+total_system_memory:2085830656
+total_system_memory_human:1.94G
+used_memory_lua:37888
+used_memory_lua_human:37.00K
+used_memory_scripts:0
+used_memory_scripts_human:0B
+number_of_cached_scripts:0
+maxmemory:0
+maxmemory_human:0B
+maxmemory_policy:noeviction
+allocator_frag_ratio:1.22
+allocator_frag_bytes:254616
+allocator_rss_ratio:2.65
+allocator_rss_bytes:2363392
+rss_overhead_ratio:1.99
+rss_overhead_bytes:3764224
+mem_fragmentation_ratio:8.95
+mem_fragmentation_bytes:6716440
+mem_not_counted_for_evict:0
+mem_replication_backlog:0
+mem_clients_slaves:0
+mem_clients_normal:33972
+mem_aof_buffer:0
+mem_allocator:jemalloc-5.1.0
+active_defrag_running:0
+lazyfree_pending_objects:0
+
+# Persistence
+loading:0
+rdb_changes_since_last_save:0
+rdb_bgsave_in_progress:0
+rdb_last_save_time:1608023497
+rdb_last_bgsave_status:ok
+rdb_last_bgsave_time_sec:-1
+rdb_current_bgsave_time_sec:-1
+rdb_last_cow_size:0
+aof_enabled:0
+aof_rewrite_in_progress:0
+aof_rewrite_scheduled:0
+aof_last_rewrite_time_sec:-1
+aof_current_rewrite_time_sec:-1
+aof_last_bgrewrite_status:ok
+aof_last_write_status:ok
+aof_last_cow_size:0
+module_fork_in_progress:0
+module_fork_last_cow_size:0
+
+# Stats
+total_connections_received:2
+total_commands_processed:7
+instantaneous_ops_per_sec:0
+total_net_input_bytes:137
+total_net_output_bytes:47490
+instantaneous_input_kbps:0.00
+instantaneous_output_kbps:0.00
+rejected_connections:0
+sync_full:0
+sync_partial_ok:0
+sync_partial_err:0
+expired_keys:0
+expired_stale_perc:0.00
+expired_time_cap_reached_count:0
+expire_cycle_cpu_milliseconds:3
+evicted_keys:0
+keyspace_hits:0
+keyspace_misses:0
+pubsub_channels:0
+pubsub_patterns:0
+latest_fork_usec:0
+migrate_cached_sockets:0
+slave_expires_tracked_keys:0
+active_defrag_hits:0
+active_defrag_misses:0
+active_defrag_key_hits:0
+active_defrag_key_misses:0
+tracking_total_keys:0
+tracking_total_items:0
+tracking_total_prefixes:0
+unexpected_error_replies:0
+
+# Replication
+role:master
+connected_slaves:0
+master_replid:7b14ce66bea6d5afd8ceb2942cc144359e218c36
+master_replid2:0000000000000000000000000000000000000000
+master_repl_offset:0
+second_repl_offset:-1
+repl_backlog_active:0
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:0
+repl_backlog_histlen:0
+
+# CPU
+used_cpu_sys:0.162191
+used_cpu_user:0.153654
+used_cpu_sys_children:0.001343
+used_cpu_user_children:0.001118
+
+# Modules
+
+# Cluster
+cluster_enabled:0
+
+# Keyspace
+127.0.0.1:6379>
+//////////////////////////////////////////////////////////////////////////////////////////////
+
+How to save simple data into redis server?
+
+Command:
+SET 
+GET
+
+SET key value [EX seconds|PX milliseconds|KEEPTTL] [NX|XX] [GET]
+
+127.0.0.1:6379> SET message "Hello Redis!!"
+OK
+
+Here We send key via set command to server, server will execute that command, stores data with
+key-value, once success it returns RESPONSE - OK.
+
+GET key
+
+127.0.0.1:6379> GET message
+"Hello Redis!!"
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+Commands: Keys:
+..............
+
+How to read all keys or some of the keys?
+
+ KEYS
+ SCAN
+
+1.KEYS pattern
+
+Returns all keys matching pattern.
+
+127.0.0.1:6379> KEYS *
+1) "message"
+
+127.0.0.1:6379> KEYS m?ssage
+1) "message"
+
+Redis uses glob-style pattern similar to regex pattern.
+
+Keys
+-Blocks until complete
+   lets say database contains million keys, it blocks database long time
+ Recommendation : dont use in production, use it in dev and testing env only.
+
+Scan :
+  iterates over cursor
+  it also blocks but only iterates over handful  of keys at  the time.
+  Returns slot references
+  May return 0 or more keys per call.
+  Safe for production.
+
+
+
+127.0.0.1:6379> scan 0 MATCH *
+1) "15"
+2)  1) "a"
+    2) "c1"
+    3) "c"
+    4) "d"
+    5) "d1"
+    6) "b"
+    7) "message"
+    8) "e"
+    9) "a1"
+   10) "e1"
+127.0.0.1:6379> scan 0 MATCH *
+1) "15"
+2)  1) "a"
+    2) "c1"
+    3) "c"
+    4) "d"
+    5) "d1"
+    6) "b"
+    7) "message"
+    8) "e"
+    9) "a1"
+   10) "e1"
+127.0.0.1:6379> scan 0 MATCH * COUNT 4
+1) "14"
+2) 1) "a"
+   2) "c1"
+   3) "c"
+   4) "d"
+127.0.0.1:6379> scan 14 MATCH * COUNT 4
+1) "9"
+2) 1) "d1"
+   2) "b"
+   3) "message"
+   4) "e"
+127.0.0.1:6379> scan 9 MATCH * COUNT 4
+1) "0"
+2) 1) "a1"
+   2) "e1"
+   3) "b1"
+127.0.0.1:6379> scan 0 MATCH * COUNT 4
+1) "14"
+2) 1) "a"
+   2) "c1"
+   3) "c"
+   4) "d"
+127.0.0.1:6379>
+//////////////////////////////////////////////////////////////////////////////////////////////
+Redis Key Modeling Patterns: Redis community Recommendation:
+............................................................
+
+KEY NAME:
+
+Plain keynames
+   A    10
+   X    20
+   name "subramanian"
+
+Redis coding standard:
+  objectname:identifier:subidentifier
+
+i want to store order status
+
+  order:1  available
+  order:2  outofstock
+  order:3  pending
+  user:1:status online
+
+127.0.0.1:6379> SET order:1 "available"
+OK
+127.0.0.1:6379> SET order:1 "available"
+OK
+127.0.0.1:6379> get order:2 "outofstock"
+OK
+127.0.0.1:6379> set user:1:status online
+OK
+127.0.0.1:6379> set user:2:status online
+OK
+127.0.0.1:6379> set user:3:status offline
+
+////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+KEYS REMOVAL: DEL and Unlink
+/////////////////////////////
+
+
+DEL key [key ...]
+
+Removes the specified keys. A key is ignored if it does not exist.
+
+Return value
+Integer reply: The number of keys that were removed.
+
+-The DEL Command will remove the key and memory associated with the key.
+-This is performed as a blocking opertion.
+
+UnLink:
+......
+-With UNLINK, key is unlinked , hence the name of the  command and will no longer exists.
+-The memory associated with the key value is reclaimed by an asynchronous process,so the UNLINK is a  non-blocking command.
+
+
+127.0.0.1:6379> DEL a
+(integer) 1
+127.0.0.1:6379> DEL a a1
+(integer) 1
+127.0.0.1:6379> DEL b b1
+(integer) 2
+127.0.0.1:6379> UNLINK  c c1
+(integer) 2
+127.0.0.1:6379> get c
+(nil)
+127.0.0.1:6379> get a
+(nil)
+127.0.0.1:6379>
+
+Note:
+ if key does not exit , it returns "nil"
+
+///////////////////////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+However, there are times when you only want to set the value if the key already exists.
+
+EXISTS key [key ...]
+
+EXISTS customer:1000
+127.0.0.1:6379> EXISTS customer:2000
+(integer) 1
+127.0.0.1:6379> EXISTS customer:9000
+(integer) 0
+127.0.0.1:6379>
+
+it returns 1 for key present , 0 means no key present
+
+Use case :
+
+Why should i use exits command to verify the existing of key.
+
+Operations:
+ - new Key - insert
+ - update key  -  update.
+
+how to add new key
+
+-SET Command
+127.0.0.1:6379> SET customer:9000 jane
+OK
+127.0.0.1:6379> GET customer:9000
+"jane"
+
+what if i want to update customer name of customer:9000
+SET Command
+
+127.0.0.1:6379> SET customer:9000 "jane james"
+OK
+127.0.0.1:6379> GET customer:9000
+"jane james"
+127.0.0.1:6379>
+
+
+
+127.0.0.1:6379> EXISTS customer:9000
+(integer) 0
+127.0.0.1:6379> SET customer:9000 jane
+OK
+
+You could first check with the exist command to see if the key is present before using SET.
+
+But having two operations-- the exists followed by a set--means two round trips Redis and possible inconsistencies between the operations.
+
+NX -  for create
+XX -  for update.
+
+127.0.0.1:6379> SET customer:333 john NX
+OK
+127.0.0.1:6379> SET customer:333 john NX
+(nil)
+127.0.0.1:6379> SET customer:444 Karthik XX
+(nil)
+127.0.0.1:6379> SET customer:444 Karthik NX
+OK
+127.0.0.1:6379> SET customer:444 Karthik.K XX
+OK
+127.0.0.1:6379> GET customer:444
+"Karthik.K"
+127.0.0.1:6379>
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+Timers : Automatic Key Eviction:
+.................................
+timeout in sec- ex
+timeout in msc -px
+	
+27.0.0.1:6379> SET seat-hold Row:A:Seat:4 EX 5000
+OK
+127.0.0.1:6379> get seat-hold
+"Row:A:Seat:4"
+127.0.0.1:6379> get seat-hold
+"Row:A:Seat:4"
+127.0.0.1:6379> get seat-hold
+"Row:A:Seat:4"
+127.0.0.1:6379> TTL seat-hold
+(integer) 4957
+127.0.0.1:6379> TTL seat-hold
+(integer) 4952
+127.0.0.1:6379> SET user:password something PX 10000
+OK
+127.0.0.1:6379> TTL user:password
+(integer) -2
+127.0.0.1:6379> get user:password
+(nil)
+127.0.0.1:6379> exists user:password
+(integer) 0
+127.0.0.1:6379> SET user:password something PX 10000
+OK
+127.0.0.1:6379> exists user:password
+(integer) 1
+127.0.0.1:6379> get user:password
+"something"
+127.0.0.1:6379> get user:password
+(nil)
+127.0.0.1:6379>
+//////////////////////////////////////////////////////////////////////////////////////////////
+
+                                             Data types
+1.String:
+ -store alphabets
+ -store numbers
+ -store binary.
+    -image,spreadsheets,html fragments
+
+no int,float datatype.
+
+There is a limit of 512 megabytes for any string value
+
+JPEGs, Excel spreadsheets, HTML fragments, as well as
+plain old regular text and numbers are permissible.
+
+Internally, Redis stores encoding of the value, stores a knowledge of whether it is a text, number, or binary.
+ 1 - integer
+ "a" - string
+ binary - bytes
+
+How to know the type of key?
+
+TYPE key
+
+127.0.0.1:6379> SET  a 10
+OK
+127.0.0.1:6379> SET name "Subramanian"
+OK
+127.0.0.1:6379> SET b "10"
+OK
+127.0.0.1:6379> TYPE a
+string
+127.0.0.1:6379> TYPE name
+string
+127.0.0.1:6379> TYPE b
+string
+127.0.0.1:6379> SET c 10.5
+OK
+127.0.0.1:6379> TYPE c
+string
+
+Since string is Super Type, 10 also stored as string but it is numeric value.
+
+Can i do some computation on numerical value.
+Yes!
+
+in order to know the internal type of string
+
+OBJECT subcommand key
+
+The OBJECT command allows to inspect the internals of Redis Objects associated with keys
+
+OBJECT ENCODING <key> returns the kind of internal representation used in order to store the value associated with a key.
+
+127.0.0.1:6379> SET  a 10
+OK
+127.0.0.1:6379> SET name "Subramanian"
+OK
+127.0.0.1:6379> SET b "10"
+OK
+127.0.0.1:6379> TYPE a
+string
+127.0.0.1:6379> TYPE name
+string
+127.0.0.1:6379> TYPE b
+string
+127.0.0.1:6379> SET c 10.5
+OK
+127.0.0.1:6379> TYPE c
+string
+127.0.0.1:6379> INCR a
+(integer) 11
+127.0.0.1:6379> INCR b
+(integer) 11
+127.0.0.1:6379> OBJECT ENCODING a
+"int"
+127.0.0.1:6379> OBJECT ENCODING b
+"int"
+127.0.0.1:6379> OBJECT ENCODING name
+"embstr"
+127.0.0.1:6379> OBJECT ENCODING c
+"embstr"
+127.0.0.1:6379> INCR name
+(error) ERR value is not an integer or out of range
+127.0.0.1:6379> INCR c
+(error) ERR value is not an integer or out of range
+127.0.0.1:6379> INCRBYFLOAT c
+(error) ERR wrong number of arguments for 'incrbyfloat' command
+127.0.0.1:6379> INCRBYFLOAT c 1
+"11.5"
+127.0.0.1:6379> INCRBYFLOAT c 1
+"12.5"
+127.0.0.1:6379> INCRBY a 10
+(integer) 21
+127.0.0.1:6379> INCRBY a 10
+(integer) 31
+127.0.0.1:6379> INCRBY a 10
+(integer) 41
+127.0.0.1:6379> INCRBY a -10
+(integer) 31
+127.0.0.1:6379> INCRBY a 10
+(integer) 41
+127.0.0.1:6379> INCRBY a -10
+(integer) 31
+127.0.0.1:6379> DECR a
+(integer) 30
+127.0.0.1:6379> DECRby a 5
+(integer) 25
+127.0.0.1:6379> DECRby a 5
+(integer) 20
+127.0.0.1:6379>
+////////////////////////////////////////////////////////////////////////////////////////////
+
+String operations:
+
+-string length
+-stringrange
+-append
+
+127.0.0.1:6379> STRLEN name
+(integer) 11
+127.0.0.1:6379> set name "Subramanian"
+OK
+127.0.0.1:6379> GETRANGE name 0 4
+"Subra"
+127.0.0.1:6379>
+
+127.0.0.1:6379> APPEND name "Murugan"
+(integer) 18
+127.0.0.1:6379> get name
+"SubramanianMurugan"
+127.0.0.1:6379>
+////////////////////////////////////////////////////////////////////////////////////////////
+
+Streo type commands:
+
+ -Commands looks like but which gives semantic meaning and simple use to
+
+MSET key value [key value ...]
+////////////////////////////////////////////////////////////////////////////////////////////
+
+Bit Maps:
+........
+
+Collection of bits which forms a structure called bit map.
+
+BitMaps are  a data type used within Redis and represents a long list of bits that contain 0 by default and we can use SETBIT Command to flip to 1 or 0
+
+
+Key                    Value                               type
+	
+a_bitmap     0 0 0  0 0 0 0 0 0 0 0 0 0 0                  binary string
+
+
+bitmap can store up to 2pow 32 bits,about 4 billion items
+
+Use case: login use case
+
+SETBIT logins:2017:04 6 1
+
+here login:2017:04 is key
+6 is offset , typically userid as offset
+1 is active bit
+
+SETBIT logins:2017:04 6 1
+
+27.0.0.1:6379> SET login:today 7 1
+(error) ERR syntax error
+127.0.0.1:6379> SETBIT login:today 7 1
+(integer) 0
+127.0.0.1:6379> SETBIT login:today 7 0
+(integer) 1
+127.0.0.1:6379> GET login:today
+"\x00"
+127.0.0.1:6379> Type login:today
+string
+127.0.0.1:6379> object encoding login:today
+"raw"
+127.0.0.1:6379>
+
+types:
+ int -numbers
+ embstr -embededstring
+ raw - binary- bits
+/////////////////////////////////////////////**************//////////////////////////////////
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
