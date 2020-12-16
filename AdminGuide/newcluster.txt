@@ -1,0 +1,303 @@
+cluster-enabled yes
+cluster-config-file cluster.conf
+cluster-node-timeout 2000
+cluster-slave-validity-factor 10
+cluster-migration-barrier 1
+cluster-require-full-coverage yes
+
+redis-server --port 5000 --cluster-enabled yes --cluster-config-file
+nodes-5000.conf --cluster-node-timeout 2000 --cluster-slave-validityfactor
+10 --cluster-migration-barrier 1 --cluster-require-full-coverage
+yes --dbfilename dump-5000.rdb --daemonize no
+
+redis-server --port 5001 --cluster-enabled yes --cluster-config-file
+nodes-5001.conf --cluster-node-timeout 2000 --cluster-slave-validityfactor
+10 --cluster-migration-barrier 1 --cluster-require-full-coverage
+yes --dbfilename dump-5001.rdb --daemonize no
+
+
+redis-server --port 5002 --cluster-enabled yes --cluster-config-file
+nodes-5002.conf --cluster-node-timeout 2000 --cluster-slave-validityfactor
+10 --cluster-migration-barrier 1 --cluster-require-full-coverage
+yes --dbfilename dump-5002.rdb --daemonize no
+
+
+cluster-node-timeout (this value
+is in milliseconds). 
+ If a node is not reachable for the specified amount of time by the
+majority of master nodes, it will be considered as failing.
+	If that node is a master, a
+failover to one of its slaves will occur. If it is a slave, it will stop accepting queries.
+
+cluster-slave-validityfactor:
+
+-Sometimes, network failures happen, and when they happen, it is always a good
+idea to minimize problems.
+
+-If network issues are happening and nodes cannot
+communicate well, it is possible that the majority of nodes think that a given master is
+down and so a failover procedure should start
+
+-If the network only had a hiccup, the
+failover procedure might have been unnecessary. There is a configuration directive
+that helps minimize these kinds of problems. 
+
+-The directive is cluster-slave-validityfactor, and it expects a factor. By default, the factor is 10.
+If there is a network issue and a master node cannot communicate well with other nodes for a certain amount of time (cluster-node-timeout multiplied by cluster-slave-validity-factor),
+no slaves will be promoted to replace that master.
+When the connection issues go away and the
+master node is able to communicate well with others again, if it becomes unreachable
+a failover will happen.
+
+When the factor is set to zero, no failovers will be prevented. If any network
+connectivity issues occur and the factor is zero, a slave will always perform
+the failover.
+
+cluster-migration-barrier:
+..........................
+It is possible to specify the minimum number of slaves that must be connected
+to a master through the directive cluster-migration-barrier, which has a default
+value of 1.
+
+This directive is useful if you need to ensure a minimum number of
+slaves per master. Otherwise, masters without slaves will borrow spare slaves
+from other masters.
+
+Use case:
+Take the following example: master A has A1 and A2 as slaves, master B has B1 as a
+slave, master C has C1 as a slave, and the directive cluster-migration-barrier is set to
+2. If master C fails and C1 gets promoted to master, master A will keep all of its slaves
+(because the minimum is 2), and master C1 will have zero slaves.
+
+If you never want
+to have masters borrowing slaves from other masters, set this configuration to a high
+number
+
+In Redis Cluster, all data is sharded among master nodes.
+
+If any master node fails and
+there is no slave to fail over to, a portion of the data will be lost. When this happens,
+you have two options:
+• Make the entire cluster unavailable
+• Make the cluster available, but such that all keys that would be routed to that
+master node will result in an error.
+
+cluster-require-full-coverage
+
+The directive that controls this behavior is cluster-require-full-coverage. By default, it
+is yes. Full coverage means that all 16,384 hash slots are assigned to reachable masters
+If this directive is set to yes, all hash slots must be reachable. Otherwise, the entire
+cluster will be unavailable.
+
+If it is set to no, the cluster will still be available, but queries
+that route to hash slots assigned to any unreachable masters will result in errors
+//////////////////////////////////////////////////////////////////////////////////////
+
+Setup from scratch
+
+
+$ redis-server --port 5000 --cluster-enabled yes --cluster-config-file
+nodes-5000.conf --cluster-node-timeout 2000 --cluster-slave-validityfactor
+10 --cluster-migration-barrier 1 --cluster-require-full-coverage
+yes --dbfilename dump-5000.rdb --daemonize yes
+
+$ redis-server --port 5001 --cluster-enabled yes --cluster-config-file
+nodes-5001.conf --cluster-node-timeout 2000 --cluster-slave-validityfactor
+10 --cluster-migration-barrier 1 --cluster-require-full-coverage
+yes --dbfilename dump-5001.rdb --daemonize yes
+
+$ redis-server --port 5002 --cluster-enabled yes --cluster-config-file
+nodes-5002.conf --cluster-node-timeout 2000 --cluster-slave-validityfactor
+10 --cluster-migration-barrier 1 --cluster-require-full-coverage
+yes --dbfilename dump-5002.rdb --daemonize yes
+
+The cluster is not ready to run yet. We can check the cluster's health with the
+CLUSTER INFO command:
+$ redis-cli -c -p 5000
+127.0.0.1:5000> CLUSTER INFO
+cluster_state:fail
+cluster_slots_assigned:0
+cluster_slots_ok:0
+cluster_slots_pfail:0
+cluster_slots_fail:0
+cluster_known_nodes:1
+cluster_size:0
+cluster_current_epoch:0
+cluster_my_epoch:0
+cluster_stats_messages_sent:0
+cluster_stats_messages_received:0
+127.0.0.1:5000> SET foo bar
+(error) CLUSTERDOWN The cluster is down
+
+The output of CLUSTER INFO tells us that the cluster only knows about one node
+(the connected node), no slots are assigned to any of the nodes, and the cluster state
+is fail.
+When the cluster is in the fail state, it cannot process any queries, as we could see
+when we tried to execute the SET command.
+
+Next, the 16,384 hash slots are distributed evenly across the three instances.
+
+The configuration cluster-require-full-coverage is set to yes, which means that the
+cluster can process queries only if all hash slots are assigned to running instances:
+
+$ redis-cli -c -p 5000 CLUSTER ADDSLOTS {0..5460}
+$ redis-cli -c -p 5001 CLUSTER ADDSLOTS {5461..10922}
+$ redis-cli -c -p 5002 CLUSTER ADDSLOTS {10923..16383}
+
+The preceding shell lines use a range trick to expand the numbers. They take the
+starting number and the ending number and expand them into separate numbers.
+It is the same as passing 0, 1, 2, 3, 4, 5, and so on up to 5460 to the first line.
+
+The CLUSTER ADDSLOTS command informs the node what slots it should own.
+If a hash slot is already assigned, this command fails. It is possible to assign slots one
+by one; it does not need to be a sequence of numbers.
+
+At this point, the hash slots are distributed evenly across the nodes, but the cluster is
+not ready yet. The cluster nodes still do not know about each other.
+
+configuration epoch:
+
+In Redis Cluster, there is a concept called configuration epoch, which is a number that
+represents the cluster state at a particular point in time.
+
+This number is used when new events occur and the nodes need to agree on what is
+going to happen next (such as failover or resharding of hash slots).
+When a cluster is initially created, the configuration epoch is set to 0 for each master.
+We can change this to help Redis start the cluster in a safe way. This is the only
+time when the configuration epoch should be changed manually. Redis Cluster
+automatically changes the configuration after it is up and running:
+
+$ redis-cli -c -p 5000 CLUSTER SET-CONFIG-EPOCH 1
+$ redis-cli -c -p 5001 CLUSTER SET-CONFIG-EPOCH 2
+$ redis-cli -c -p 5002 CLUSTER SET-CONFIG-EPOCH 3
+
+This example executes the command CLUSTER SET-CONFIG-EPOCH to manually
+set an incremental epoch to each node, which is good practice when starting a new
+cluster. In this example, there is no conflicting information. However, if there was
+conflicting information (for example, if two different nodes claimed the same hash
+slots), the largest epoch configuration would have priority.
+
+Next, we are going to make all the nodes aware of each other. We will do this using
+the command CLUSTER MEET:
+$ redis-cli -c -p 5000 CLUSTER MEET 127.0.0.1 5001
+$ redis-cli -c -p 5000 CLUSTER MEET 127.0.0.1 5002
+
+It is not necessary to execute CLUSTER MEET on each node to notify it about the
+existence of all the other nodes. When the first node meets the second, it means that
+the second node also knows about the first, and they can exchange information about
+other nodes that they know. When the first node meets the third node, all three
+nodes will know about each other eventually, through the gossip protocol that Redis
+Cluster implements.
+
+Run the command CLUSTER INFO to see that the cluster is up and running:
+$ redis-cli -c -p 5000
+127.0.0.1:5000> CLUSTER INFO
+cluster_state:ok
+cluster_slots_assigned:16384
+cluster_slots_ok:16384
+cluster_slots_pfail:0
+cluster_slots_fail:0
+cluster_known_nodes:3
+cluster_size:3
+cluster_current_epoch:3
+cluster_my_epoch:1
+cluster_stats_messages_sent:164
+cluster_stats_messages_received:144
+
+
+Adding slaves/replicas:
+.......................
+
+There are three master nodes but no slaves. Thus, no data is replicated anywhere.
+This is not very safe. Data can be lost, and if any master has issues, the entire cluster
+will be unavailable (cluster-require-full-coverage is set to yes).
+
+A new slave/replica can be added to the cluster by:
+
+• Creating a new Redis instance in cluster mode
+
+• Introducing it to the current cluster using the command CLUSTER MEET
+
+• Getting the node ID of the master that will be replicated using the command
+CLUSTER NODES
+• Executing the command CLUSTER REPLICATE to replicate a given node
+
+Create a new Redis instance in cluster mode:
+
+$ redis-server --port 5003 --cluster-enabled yes --cluster-config-file
+nodes-5003.conf --cluster-node-timeout 2000 --cluster-slave-validityfactor
+10 --cluster-migration-barrier 1 --cluster-require-full-coverage
+yes --dbfilename dump-5003.rdb --daemonize yes
+
+Introduce it to the current cluster using the command CLUSTER MEET:
+$ redis-cli -c -p 5003 CLUSTER MEET 127.0.0.1 5000
+
+Get the node ID of the master that is going to be replicated by using the command
+CLUSTER NODES:
+
+$ redis-cli -c -p 5003 CLUSTER NODES
+
+b5354de29d7ec02e64580658d3f59422cfeda916 127.0.0.1:5002 master - 0
+1432276450590 3 connected 10923-16383
+08cbbb4c05ec977af9c4925834a71971bbea3477 127.0.0.1:5003 myself,master - 0
+0 0 connected
+68af8b5f533abae1888312a2fecd7cbe4ac77e0a 127.0.0.1:5001 master - 0
+1432276449782 2 connected 5461-10922
+f5940c6bcd6f06abb07f7d480b16630b6a597424 127.0.0.1:5000 master - 0
+1432276449782 1 connected 0-5460
+
+The command CLUSTER NODES outputs a list with all the nodes that belong to
+the cluster, along with their properties. Every line follows this format: <node-id>
+<ip:port> <flags> <master> <ping-sent> <pong-recv> <config-epoch> <link-state> <slots>.
+
+Let's replicate the instance running on port 5000. The output shows that the node ID
+for this instance is f5940c6bcd6f06abb07f7d480b16630b6a597424.
+Since the node ID is generated randomly using /dev/urandom, all CLUSTER NODES
+outputs in our examples are merely for demonstration.
+
+..............................................
+Create a replica:
+Execute the command CLUSTER REPLICATE to replicate a given node:
+
+$ redis-cli -c -p 5003 CLUSTER REPLICATE
+f5940c6bcd6f06abb07f7d480b16630b6a597424
+
+The replica is ready and CLUSTER NODES can confirm this:
+
+$ redis-cli -c -p 5003 CLUSTER NODES
+
+b5354de29d7ec02e64580658d3f59422cfeda916 127.0.0.1:5002 master - 0
+1432276452608 3 connected 10923-16383
+08cbbb4c05ec977af9c4925834a71971bbea3477 127.0.0.1:5003 myself,slave
+f5940c6bcd6f06abb07f7d480b16630b6a597424 0 0 0 connected
+68af8b5f533abae1888312a2fecd7cbe4ac77e0a 127.0.0.1:5001 master - 0
+1432276452608 2 connected 5461-10922
+f5940c6bcd6f06abb07f7d480b16630b6a597424 127.0.0.1:5000 master - 0
+1432276451800 1 connected 0-5460
+
+The first output line is the slave information. It said myself,master previously, and
+after CLUSTER REPLICATE, it became myself,slave.
+
+
+
+
+
+redis-cli -c -h localhost -p 30001
+
+
+
+
+
+
+Scaling reads using slave nodes
+
+In order to scale Redis Cluster reads, it is possible to connect to a slave and enter
+read-only mode through the command READONLY. When a slave is in read-only
+mode, it does not redirect the queries that it is capable of serving. It will only redirect
+those queries that it is not able to serve. The only drawback of this mode is that it is
+possible to read stale data.
+It is possible to end read-only mode with the command READWRITE.
+It may be a good idea to use read-only mode based on the needs of the application.
+If read-only mode is not used, all queries will route to the master nodes. In this
+scenario, the master nodes could become a bottleneck, while the slaves may be
+idle most of the time.

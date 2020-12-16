@@ -1,0 +1,474 @@
+                                     Redis Administraction Task Lab Handout
+....................................................................................................................
+1.How to inspect the redis server information?
+
+127.0.0.1:6379> info
+
+# Server
+redis_version:6.0.4
+redis_git_sha1:00000000
+redis_git_dirty:0
+redis_build_id:d5d470262d47f1a0
+redis_mode:standalone
+os:Linux 5.4.39-linuxkit x86_64
+arch_bits:64
+multiplexing_api:epoll
+atomicvar_api:atomic-builtin
+gcc_version:8.3.0
+process_id:1
+run_id:40543dac7951c11291c95a053a7246e647b36305
+tcp_port:6379
+uptime_in_seconds:47891
+uptime_in_days:0
+hz:10
+configured_hz:10
+lru_clock:13047257
+executable:/data/redis-server
+config_file:
+
+# Clients
+connected_clients:2
+client_recent_max_input_buffer:2
+client_recent_max_output_buffer:0
+blocked_clients:0
+tracking_clients:0
+clients_in_timeout_table:0
+
+# Memory
+used_memory:893520
+used_memory_human:872.58K
+used_memory_rss:7598080
+used_memory_rss_human:7.25M
+used_memory_peak:893520
+used_memory_peak_human:872.58K
+used_memory_peak_perc:100.17%
+used_memory_overhead:837156
+used_memory_startup:802848
+used_memory_dataset:56364
+used_memory_dataset_perc:62.16%
+allocator_allocated:936504
+allocator_active:1224704
+allocator_resident:3592192
+total_system_memory:2084323328
+total_system_memory_human:1.94G
+used_memory_lua:37888
+used_memory_lua_human:37.00K
+used_memory_scripts:0
+used_memory_scripts_human:0B
+number_of_cached_scripts:0
+maxmemory:0
+maxmemory_human:0B
+maxmemory_policy:noeviction
+allocator_frag_ratio:1.31
+allocator_frag_bytes:288200
+allocator_rss_ratio:2.93
+allocator_rss_bytes:2367488
+rss_overhead_ratio:2.12
+rss_overhead_bytes:4005888
+mem_fragmentation_ratio:8.93
+mem_fragmentation_bytes:6747072
+mem_not_counted_for_evict:0
+mem_replication_backlog:0
+mem_clients_slaves:0
+mem_clients_normal:33972
+mem_aof_buffer:0
+mem_allocator:jemalloc-5.1.0
+active_defrag_running:0
+lazyfree_pending_objects:0
+
+# Persistence
+loading:0
+rdb_changes_since_last_save:3
+rdb_bgsave_in_progress:0
+rdb_last_save_time:1606879301
+rdb_last_bgsave_status:ok
+rdb_last_bgsave_time_sec:1
+rdb_current_bgsave_time_sec:-1
+rdb_last_cow_size:200704
+aof_enabled:0
+aof_rewrite_in_progress:0
+aof_rewrite_scheduled:0
+aof_last_rewrite_time_sec:-1
+aof_current_rewrite_time_sec:-1
+aof_last_bgrewrite_status:ok
+aof_last_write_status:ok
+aof_last_cow_size:0
+module_fork_in_progress:0
+module_fork_last_cow_size:0
+
+# Stats
+total_connections_received:9
+total_commands_processed:107
+instantaneous_ops_per_sec:0
+total_net_input_bytes:3636
+total_net_output_bytes:227343
+instantaneous_input_kbps:0.00
+instantaneous_output_kbps:0.00
+rejected_connections:0
+sync_full:0
+sync_partial_ok:0
+sync_partial_err:0
+expired_keys:0
+expired_stale_perc:0.00
+expired_time_cap_reached_count:0
+expire_cycle_cpu_milliseconds:292
+evicted_keys:0
+keyspace_hits:4
+keyspace_misses:2
+pubsub_channels:0
+pubsub_patterns:0
+latest_fork_usec:164
+migrate_cached_sockets:0
+slave_expires_tracked_keys:0
+active_defrag_hits:0
+active_defrag_misses:0
+active_defrag_key_hits:0
+active_defrag_key_misses:0
+tracking_total_keys:0
+tracking_total_items:0
+tracking_total_prefixes:0
+unexpected_error_replies:0
+
+# Replication
+role:master
+connected_slaves:0
+master_replid:f5f98535613d1293befd8f298280c5f9819a8c97
+master_replid2:0000000000000000000000000000000000000000
+master_repl_offset:0
+second_repl_offset:-1
+repl_backlog_active:0
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:0
+repl_backlog_histlen:0
+
+# CPU
+used_cpu_sys:15.790574
+used_cpu_user:12.802565
+used_cpu_sys_children:0.005145
+used_cpu_user_children:0.002969
+
+# Modules
+
+# Cluster
+cluster_enabled:0
+
+# Keyspace
+db0:keys=4,expires=0,avg_ttl=0
+db1:keys=1,expires=0,avg_ttl=0
+db2:keys=1,expires=0,avg_ttl=0
+127.0.0.1:6379>
+//////////////////////////////////////////////////////////////////////////////////////
+
+2.How to restirct maxnoof clients by redis server?
+
+redis.conf
+
+maxclients 2
+
+$src/redis-server redis.conf
+
+Client connections:
+
+$cd src/redis-cli
+  > set a 10
+  ok
+
+$cd src/redis-cli
+  > set a 10
+  ok
+$cd src/redis-cli
+  > set a 10
+  ERR MAX NO OF clients reached.
+////////////////////////////////////////////////////////////////////////////////////////////
+How to set client connection timeout?
+
+redis.conf
+timeout 1000
+
+
+How to use change server configuration during server up?
+
+via command 
+config set directive value
+config get directive
+config get * 
+
+config set maxclients 5
+
+config set timeout 1000
+
+///////////////////////////////////////////////////////////////////////////////////////////
+
+How to get Client specific information?
+
+127.0.0.1:6379> client list
+id=11 addr=127.0.0.1:42592 fd=8 name= age=6684 idle=4496 flags=N db=0 sub=0 psub=0 multi=-1 qbuf=0 qbuf-free=0 obl=0 oll=0 omem=0 events=r cmd=get user=default
+id=12 addr=127.0.0.1:42594 fd=9 name=myclient age=4275 idle=0 flags=N db=0 sub=0 psub=0 multi=-1 qbuf=26 qbuf-free=32742 obl=0 oll=0 omem=0 events=r cmd=client user=default
+127.0.0.1:6379>
+
+How to change client name?
+
+127.0.0.1:6379> client setname myclient
+OK
+127.0.0.1:6379> client getname
+"myclient"
+127.0.0.1:6379>
+/////////////////////////////////////////////////////////////////////////////////////////////
+How to get redis slow call report?
+
+127.0.0.1:6379> CONFIG SET slowlog-log-slower-than 5000
+OK
+127.0.0.1:6379> CONFIG SET slowlog-max-len 50
+OK
+127.0.0.1:6379> SLOWLOG GET 50
+1) 1) (integer) 6
+   2) (integer) 1606872971
+   3) (integer) 400363
+   4) 1) "debug"
+      2) "sleep"
+      3) ".4"
+   5) "127.0.0.1:42588"
+   6) ""
+2) 1) (integer) 5
+   2) (integer) 1606872967
+   3) (integer) 500468
+   4) 1) "debug"
+      2) "sleep"
+      3) ".5"
+   5) "127.0.0.1:42588"
+   6) ""
+3) 1) (integer) 4
+   2) (integer) 1606872958
+   3) (integer) 301029
+   4) 1) "debug"
+      2) "sleep"
+      3) ".3"
+   5) "127.0.0.1:42588"
+   6) ""
+4) 1) (integer) 3
+   2) (integer) 1606872955
+   3) (integer) 200179
+   4) 1) "debug"
+      2) "sleep"
+      3) ".2"
+   5) "127.0.0.1:42588"
+   6) ""
+5) 1) (integer) 2
+   2) (integer) 1606872951
+   3) (integer) 100525
+   4) 1) "debug"
+      2) "sleep"
+      3) ".1"
+   5) "127.0.0.1:42588"
+   6) ""
+6) 1) (integer) 1
+   2) (integer) 1606872827
+   3) (integer) 250326
+   4) 1) "debug"
+      2) "sleep"
+      3) ".25"
+   5) "127.0.0.1:42588"
+   6) ""
+7) 1) (integer) 0
+   2) (integer) 1606872783
+   3) (integer) 1000143
+   4) 1) "debug"
+      2) "sleep"
+      3) "1"
+   5) "127.0.0.1:42588"
+   6) ""
+////////////////////////////////////////////////////////////////////////////////////////////
+
+Database information:
+
+127.0.0.1:6379> select 1
+OK
+127.0.0.1:6379[1]> dbsize
+(integer) 1
+127.0.0.1:6379[1]>flushall [ASYNC]  
+127.0.0.1:6379[1]> flushdb                                               
+127.0.0.1:6379[1]> swapdb 0 1 
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+Latency Check:
+
+
+127.0.0.1:6379> CONFIG SET latency-monitor-threshold 100
+OK
+127.0.0.1:6379> debug sleep 1
+OK
+(1.00s)
+127.0.0.1:6379> latency latest
+1) 1) "command"
+   2) (integer) 1606872783
+   3) (integer) 1000
+   4) (integer) 1000
+127.0.0.1:6379> debug sleep .25
+OK
+127.0.0.1:6379> latency latest
+1) 1) "command"
+   2) (integer) 1606872827
+   3) (integer) 250
+   4) (integer) 1000
+127.0.0.1:6379> latency history command
+1) 1) (integer) 1606872783
+   2) (integer) 1000
+2) 1) (integer) 1606872827
+   2) (integer) 250
+127.0.0.1:6379> latency doctor
+Dave, I have observed latency spikes in this Redis instance. You don't mind talking about it, do you Dave?
+
+1. command: 2 latency spikes (average 625ms, mean deviation 375ms, period 56.00 sec). Worst all time event 1000ms.
+
+I have a few advices for you:
+
+- Check your Slow Log to understand what are the commands you are running which are too slow to execute. Please check http://redis.io/commands/slowlog for more information.
+- Deleting, expiring or evicting (because of maxmemory policy) large objects is a blocking operation. If you have very large objects that are often deleted, expired, or evicted, try to fragment those objects into multiple smaller objects.
+127.0.0.1:6379>  latency reset command
+(integer) 1
+127.0.0.1:6379>  debug sleep .1
+OK
+127.0.0.1:6379>  debug sleep .2
+OK
+127.0.0.1:6379>  debug sleep .3
+OK
+127.0.0.1:6379>  debug sleep .5
+OK
+(0.50s)
+127.0.0.1:6379>  debug sleep .4
+OK
+127.0.0.1:6379> latency graph command
+command - high 500 ms, low 100 ms (all time high 500 ms)
+--------------------------------------------------------------------------------
+   #_
+  _||
+ _|||
+_||||
+
+22219
+9523s
+ssss
+127.0.0.1:6379>
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Database informations
+
+Swap database
+
+127.0.0.1:6379> set a 10
+OK
+127.0.0.1:6379> keys *
+1) "a"
+127.0.0.1:6379> swapdb 0 1
+OK
+127.0.0.1:6379> select 1
+OK
+127.0.0.1:6379[1]> keys *
+1) "a"
+127.0.0.1:6379[1]>
+
+ACL Matrix:
+...........
+
+ACL List
+127.0.0.1:6379> acl list
+1) "user default on nopass ~* +@all"
+127.0.0.1:6379>
+
+Add simple user:
+127.0.0.1:6379> acl setuser alice
+OK
+127.0.0.1:6379> acl list
+1) "user alice off -@all"
+2) "user default on nopass ~* +@all"
+127.0.0.1:6379>
+
+The just created user "alice" is:
+
+In off status, that is, it's disabled. AUTH will not work.
+The user also has no passwords set.
+Cannot access any command. Note that the user is created by default without the ability to access any command, so the -@all in the output above could be omitted, however ACL LIST attempts to be explicit rather than implicit.
+There are no key patterns that the user can access.
+The user can access all Pub/Sub channels.
+
+127.0.0.1:6379> ACL SETUSER alice on >p1pp0 ~cached:* +get
+OK
+1
+> AUTH alice p1pp0
+OK
+> GET foo
+(error) NOPERM this user has no permissions to access one of the keys used as arguments
+> GET cached:1234
+(nil)
+> SET cached:1234 zap
+(error) NOPERM this user has no permissions to run the 'set' command or its subcommand
+///////////////////////////////
+
+127.0.0.1:6379> ACL WHOAMI
+"default"
+1
+////////////////////////////////////////////////////////////////////////////////////////////
+
+Singal Hanlding:
+
+Log files:
+redis server maintains a logfile can be configured in redis.conf
+logfile "server.log"
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
+Replication Lab:
+Use case :
+
+1 master , two replicas 
+
+On the first terminal, start the master redis-server on port 5555:
+$ redis-server --port 5555
+
+On the second terminal, start the first slave on port 6666:
+$ redis-server --port 6666 --slaveof 127.0.0.1 5555
+
+On the third terminal, start the second slave on port 7777:
+$ redis-server --port 7777 --slaveof 127.0.0.1 5555
+
+At this point, there is a master with two replicas running.
+On the fourth terminal, check whether the replication is working:
+
+$ redis-cli -p 5555 
+SET testkey testvalue
+OK
+$ redis-cli -p 6666 
+GET testkey
+"testvalue"
+$ redis-cli -p 7777 
+GET testkey
+"testvalue"
+
+-All read operations are handled by slaves
+-All write operations are handled by master.
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+Replications with Failure : When master dies, How to Promote slave as master:
+.............................................................................
+
+-The command SLAVEOF NO ONE converts a slave into a master instance, and it
+should be used in a failover scenario.
+
+Killing master instance ; to test fail over
+
+$ redis-cli -p 5555 DEBUG SEGFAULT
+
+Promote Slave as Master
+
+$ redis-cli -p 6666 SLAVEOF NO ONE
+
+Run slave
+$ redis-cli -p 7777 SLAVEOF 127.0.0.1 6666
+
+
+
+
+
+

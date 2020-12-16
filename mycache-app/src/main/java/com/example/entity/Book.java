@@ -1,9 +1,12 @@
 package com.example.entity;
+import org.springframework.data.redis.core.RedisHash;
+
 import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
-public class Book {
+public class Book implements  Serializable {
+    private static final long serialVersionUID = 1307525040224585678L;
     @Id
     @GeneratedValue
     private long id;

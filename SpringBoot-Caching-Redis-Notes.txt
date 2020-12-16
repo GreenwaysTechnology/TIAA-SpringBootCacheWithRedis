@@ -1825,7 +1825,7 @@ Scan :
     8) "e"
     9) "a1"
    10) "e1"
-127.0.0.1:6379> scan 0 MATCH *
+127.0.0.1:6379> scan 15 MATCH *
 1) "15"
 2)  1) "a"
     2) "c1"
@@ -2010,6 +2010,7 @@ Timers : Automatic Key Eviction:
 .................................
 timeout in sec- ex
 timeout in msc -px
+TTL key - to verify , how much time is there 
 	
 27.0.0.1:6379> SET seat-hold Row:A:Seat:4 EX 5000
 OK
@@ -2059,7 +2060,7 @@ plain old regular text and numbers are permissible.
 Internally, Redis stores encoding of the value, stores a knowledge of whether it is a text, number, or binary.
  1 - integer
  "a" - string
- binary - bytes
+ binary - bytes-raw
 
 How to know the type of key?
 
@@ -2227,47 +2228,1635 @@ types:
  raw - binary- bits
 /////////////////////////////////////////////**************//////////////////////////////////
 
+Hash:
+.....
+
+String stores single/scalar value only
+
+ SET a 10
+
+Hash Stores key-value pair values into one single key
+
+    player:1
+        name:xxx
+        score:12
+        status:available
+
+H-SET =>HashSet
+
+HSET key field value [field value ...]
+
+127.0.0.1:6379> HSET player:1 name Subramanian score 80 status alive
+(integer) 3
+127.0.0.1:6379> HSET houseId:5150 numBedrooms 3 sqfeet 2700 hvac "forced air"
+(integer) 3
+1
+
+internal represention would be like below
+  
+player:1 
+       {
+         name:'subramanina',
+         score:80,
+         status:'alive'
+       }
+
+
+houseID: 5150
+	numBedrooms: 3
+	squareFeet: 2700
+	hvac: forced air
+
+
+Commands:
+
+HSET - to add field and values
+HGETALL - to read all hash values
+HGET  - TO get a particular key value
+HSET - to update existing field or add new field value
+HDEL - to delete a field value from existing hash
+HINCRBY - to increment a field value
+
+Reading Keys and key
+......................
+127.0.0.1:6379> HGETALL player:1
+1) "name"
+2) "Subramanian"
+3) "score"
+4) "80"
+5) "status"
+6) "alive"
+127.0.0.1:6379> HGET player:1 name
+"Subramanian"
+127.0.0.1:6379> HGET player:1 status
+"alive"
+127.0.0.1:6379>
+////////////////////////////////////////////////////////////////////////////////////////////
+How to maniupulate a field in hashset?
+
+HINCRBY key field increment
+HINCRBYFLOAT key field increment
+
+127.0.0.1:6379> HINCRBY player:1  score 5
+(integer) 85
+127.0.0.1:6379> HINCRBY player:1  score 5
+........................................................
+
+How to update existing fields in hash set?
+
+You can update single field or multiple fields?
+
+127.0.0.1:6379> HSET player:1 name "Ram Kumar"
+(integer) 0
+127.0.0.1:6379> HGET player:1 name
+"Ram Kumar"
+127.0.0.1:6379> HSET player:1 name "Ram Kumar" score 10
+(integer) 0
+127.0.0.1:6379> HGETALL player:1
+1) "name"
+2) "Ram Kumar"
+3) "score"
+4) "10"
+5) "status"
+6) "alive"
+127.0.0.1:6379>
+.......................................................................................
+How to add new field on existing hash?
+
+127.0.0.1:6379> HSET player:1  level 5
+(integer) 1
+127.0.0.1:6379> HGETALL player:1
+1) "name"
+2) "Ram Kumar"
+3) "score"
+4) "10"
+5) "status"
+6) "alive"
+7) "level"
+8) "5"
+127.0.0.1:6379>
+////////////////////////////////////////////////////////////////////////////////////////
+
+How to delete field/s from hash?
+
+HDEL key field [field ...]
+
+27.0.0.1:6379> HGETALL player:1
+1) "name"
+2) "Ram Kumar"
+3) "score"
+4) "10"
+5) "status"
+6) "alive"
+7) "level"
+8) "5"
+127.0.0.1:6379> HDEL player:1 status
+(integer) 1
+127.0.0.1:6379> HGETALL player:1
+1) "name"
+2) "Ram Kumar"
+3) "score"
+4) "10"
+5) "level"
+6) "5"
+127.0.0.1:6379>
+
+///////////////////////////////////////////////////////////////////////////////////////////
+
+How to verify a particular field present or not on existing hash?
+
+HEXISTS key field
+
+127.0.0.1:6379> HEXISTS player:1 status
+(integer) 0
+127.0.0.1:6379> HEXISTS player:1 level
+(integer) 1
+127.0.0.1:6379>
+...........................................................................................
+How to extract only keys and values from Hash?
+
+Keys Only:
+
+127.0.0.1:6379> HKEYS player:1
+1) "name"
+2) "score"
+3) "level"
+
+Values Only:
+127.0.0.1:6379> HVALS player:1
+1) "Ram Kumar"
+2) "10"
+3) "5
+//////////////////////////////////////////////////////////////////////////////////////////////
+                                     List
+                                   .........
+
+1.List is ordered collection of strings.
+2.List maintains order based index, which starts 0th index.
+3.Lists are dynamic array,you can add,delete items dynamically, as you add or delete,
+  the size of list automatically expanded or shrinked.
+4.Lists are implemented as "Doubly Linked List" : Linked List
+5.You can add element at any position :  head / tail - left /right.
+6.You can create other usefull data structures like "Queues/ Stacks,PQueues"
+7.Duplicates are allowed.
+
+List Operations:
+
+1.Add Elements at Head
+
+LPUSH key element [element ...]
+
+127.0.0.1:6379> LPUSH  names a b c d e
+(integer) 5
+127.0.0.1:6379>
+
+............................................................
+
+2.Get No of elemenents In the List
+
+LLEN key
+
+127.0.0.1:6379> LLEN names
+(integer) 5
+...................................................................
+3.How read elements from left most?
+
+127.0.0.1:6379> LPUSH  names a b c d e
+(integer) 5
+
+LPush adds element left side
+
+Internal storage would be for LPUSH 
+ e,d,c,a,b
+
+127.0.0.1:6379> LRANGE names 0 5
+1) "e"
+2) "d"
+3) "c"
+4) "b"
+5) "a"
+127.0.0.1:6379> LRANGE names 2 5
+1) "c"
+2) "b"
+3) "a"
+127.0.0.1:6379> LRANGE names 3 5
+1) "b"
+2) "a"
+...........................................................................................
+3.1. How to read single element based on index?
+
+LINDEX key index
+
+ - 0 means first index element
+ - -1 last tail element
+ - outofindex - nil
+
+127.0.0.1:6379> LRANGE names 0 7
+1) "c"
+2) "redis-cli"
+3) "b"
+4) "a"
+
+Get the first element:
+
+127.0.0.1:6379> LINDEX names 0
+"c"
+
+127.0.0.1:6379> LINDEX names 1
+"redis-cli"
+127.0.0.1:6379> LINDEX names -1
+"a"
+127.0.0.1:6379> LINDEX names -2
+"b"
+127.0.0.1:6379> LINDEX names 90
+(nil)
+127.0.0.1:6379>
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+How to update/replace old node value into new node value?
+
+Before update:
+127.0.0.1:6379> LRANGE names 0 5
+1) "e"
+2) "d"
+3) "c"
+4) "b"
+5) "a"
+
+After update:
+127.0.0.1:6379> LSET  names 0 "foo"
+OK
+127.0.0.1:6379> LRANGE names 0 5
+1) "foo"
+2) "d"
+3) "c"
+4) "b"
+5) "a"
+////////////////////////////////////////////////////////////////////////////////////////////
+
+How to add element in the middle of the List?
+
+LINSERT key BEFORE|AFTER pivot element
+
+
+127.0.0.1:6379> LRANGE names 0 5
+1) "foo"
+2) "d"
+3) "c"
+4) "b"
+5) "a"
+127.0.0.1:6379> LINSERT names BEFORE "c" "redis"
+(integer) 6
+127.0.0.1:6379> LRANGE names 0 6
+1) "foo"
+2) "d"
+3) "redis"
+4) "c"
+5) "b"
+6) "a"
+127.0.0.1:6379> LINSERT names AFTER "c" "redis-cli"
+(integer) 7
+127.0.0.1:6379> LRANGE names 0 7
+1) "foo"
+2) "d"
+3) "redis"
+4) "c"
+5) "redis-cli"
+6) "b"
+7) "a"
+///////////////////////////////////////////////////////////////////////////////////////////
+How to remove element from the Left side?
+
+LPOP key
+
+Before Remove:
+..............
+
+127.0.0.1:6379> LRANGE names 0 7
+1) "foo"
+2) "d"
+3) "redis"
+4) "c"
+5) "redis-cli"
+6) "b"
+7) "a"
+127.0.0.1:6379> LPOP names
+"foo"
+127.0.0.1:6379> LPOP names
+"d"
+127.0.0.1:6379> LPOP names
+"redis"
+
+After Remove:
+.............
+
+127.0.0.1:6379> LRANGE names 0 7
+1) "c"
+2) "redis-cli"
+3) "b"
+4) "a"
+127.0.0.1:6379>
+////////////////////////////////////////////////////////////////////////////////////////////
+
+RPUSH : Pushing elements towards right
+......................................
+
+RPUSH key element [element ...]
+
+Add elements:
+
+127.0.0.1:6379> RPUSH  counters 1 2 3 4 5 6 7 8 9 10
+(integer) 10
+
+127.0.0.1:6379> LRANGE counters 0 9
+ 1) "1"
+ 2) "2"
+ 3) "3"
+ 4) "4"
+ 5) "5"
+ 6) "6"
+ 7) "7"
+ 8) "8"
+ 9) "9"
+10) "10"
+
+127.0.0.1:6379> LRANGE counters 0 9
+ 1) "1"
+ 2) "2"
+ 3) "3"
+ 4) "4"
+ 5) "5"
+ 6) "6"
+ 7) "7"
+ 8) "8"
+ 9) "9"
+10) "10"
+127.0.0.1:6379> RPOP counters
+"10"
+127.0.0.1:6379> LPOP counters
+"1"
+127.0.0.1:6379>
+/////////////////////////////////////////////////////////////////////////////////////////
+
+Think how to implement stacks and queues using list?
+.....................................................
+
+STACK - LPUSH ,LPOP
+Queue - RPUSH, LPOP
+.........................................................................................
+
+                                      SET
+............................................................................................ 
+
+Sets:
+ -Unordered collection without duplicate values.
+ -Provides mathmetical set operations - union,intersection,difference.
+
+How to create set / how to add elements set?
+
+SADD key member [member ...]
+
+127.0.0.1:6379> SADD hitcounters 1 1 2 3 3 4 5 6 7 8 8
+(integer) 8
+
+How to get all keys and values?
+
+SSCAN key cursor [MATCH pattern] [COUNT count]
+
+127.0.0.1:6379> SSCAN hitcounters 0 MATCH *
+1) "0"
+2) 1) "1"
+   2) "2"
+   3) "3"
+   4) "4"
+   5) "5"
+   6) "6"
+   7) "7"
+   8) "8"
+127.0.0.1:6379>
+
+////////////////////////////////////////////////////////////////////////////////////////
+
+Cardinality: SCARD
+
+SCARD key
+
+-Returns the set cardinality (number of elements) of the set stored at key.
+
+127.0.0.1:6379> SCARD hitcounters
+(integer) 8
+
+////////////////////////////////////////////////////////////////////////////////////////////
+
+Differences:SDIFF
+
+SDIFF key [key ...]
+
+-Returns the members of the set resulting from the difference between the first set and all the successive sets.
+
+127.0.0.1:6379> SADD key1 a b c d
+(integer) 4
+127.0.0.1:6379> SADD key2 c
+(integer) 1
+127.0.0.1:6379> SADD key3 a c e
+(integer) 3
+127.0.0.1:6379> SDIFF key1 key2 key3
+1) "b"
+2) "d"
+////////////////////////////////////////////////////////////////////////////////////////////
+
+Union : eleminate common elements
+
+127.0.0.1:6379> sadd key1  a b c d e
+(integer) 5
+127.0.0.1:6379> sadd key2 c
+(integer) 1
+127.0.0.1:6379> sadd key3 f g c
+(integer) 3
+127.0.0.1:6379> sunion key1 key2 key3
+1) "f"
+2) "c"
+3) "b"
+4) "a"
+5) "d"
+6) "e"
+7) "g"
+127.0.0.1:6379>
+///////////////////////////////////////////////////////////////////////////////////////////////
+Intersection: Common element
+
+SINTER key [key ...]
+
+Returns the members of the set resulting from the intersection of all the given sets.
+
+127.0.0.1:6379> SADD key1 a b c d
+(integer) 4
+127.0.0.1:6379> SADD key2 c
+(integer) 1
+127.0.0.1:6379> SADD key3 a c e
+
+127.0.0.1:6379> SINTER key1 key2 key3
+1) "c"
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+How to get members of a given set?
+
+SMEMBERS key
+
+
+127.0.0.1:6379> SMEMBERS key1
+1) "c"
+2) "d"
+3) "b"
+4) "a"
+127.0.0.1:6379> SMEMBERS key2
+1) "c"
+127.0.0.1:6379> SMEMBERS key3
+1) "c"
+2) "e"
+3) "a"
+127.0.0.1:6379>
+///////////////////////////////////////////////////////////////////////////////////////////
+
+To test whether an element is member of a given set?
+
+SISMEMBER key member
+ 
+1-means memeber
+0-means not a member
+
+127.0.0.1:6379> SISMEMBER key1 a
+(integer) 1
+127.0.0.1:6379> SISMEMBER key1 ab
+(integer) 0
+127.0.0.1:6379>
+
+////////////////////////////////////////////////////////////////////////////////////////////
+
+How to remove element from Set?
+
+Remove from first index
+
+SPOP key [count]
+
+127.0.0.1:6379> SMEMBERS key1
+1) "c"
+2) "d"
+3) "b"
+4) "a"
+127.0.0.1:6379> SPOP key1
+"a"
+127.0.0.1:6379> SMEMBERS key1
+1) "c"
+2) "d"
+3) "b"
+127.0.0.1:6379> SPOP key1  2
+1) "c"
+2) "d"
+127.0.0.1:6379> SMEMBERS key1
+1) "b"
+127.0.0.1:6379>
+
+Remove based on element
+
+SREM key member [member ...]
+
+127.0.0.1:6379> SMEMBERS key1
+1) "c"
+2) "d"
+3) "b"
+4) "a"
+5) "e"
+127.0.0.1:6379> SREM key1 c
+(integer) 1
+127.0.0.1:6379> SMEMBERS key1
+1) "d"
+2) "b"
+3) "a"
+4) "e"
+////////////////////////////////////////////////////////////////////////////////////////
+How to select random values from the set?
+
+SRANDMEMBER key [count]
+
+127.0.0.1:6379> SRANDMEMBER key1
+"d"
+127.0.0.1:6379> SRANDMEMBER key1
+"d"
+127.0.0.1:6379> SRANDMEMBER key1
+"b"
+127.0.0.1:6379> SRANDMEMBER key1 2
+1) "e"
+2) "a"
+127.0.0.1:6379> SRANDMEMBER key1 2
+1) "d"
+2) "b"
+127.0.0.1:6379> SRANDMEMBER key1 2
+1) "d"
+2) "b"
+//////////////////////////////////////////////////////////////////////////////////////////////
+                                   
+                                      SORTED SET
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+ -Sorted set is similar to set with sorting feature. asc or dec order - based on numbers/charcaters
+
+127.0.0.1:6379> ZADD myset 1 a
+(integer) 1
+127.0.0.1:6379> ZADD myset 1 a
+(integer) 0
+127.0.0.1:63
+79> ZADD myset 1 b
+(integer) 1
+127.0.0.1:6379> ZADD myset 2 c 3 d
+(integer) 2
+127.0.0.1:6379> ZRANGE myset 0 -1 WITHSCORES
+1) "a"
+2) "1"
+3) "b"
+4) "1"
+5) "c"
+6) "2"
+7) "d"
+8) "3"
+127.0.0.1:6379> ZRANGE myset 0 -1
+1) "a"
+2) "b"
+3) "c"
+4) "d"
+127.0.0.1:6379> ZADD myset 0 e
+(integer) 1
+127.0.0.1:6379> ZRANGE myset 0 -1
+1) "e"
+2) "a"
+3) "b"
+4) "c"
+5) "d"
+127.0.0.1:6379> ZADD myset 10 foo
+(integer) 1
+127.0.0.1:6379> ZADD myset 5 bar
+(integer) 1
+127.0.0.1:6379> ZRANGE myset 0 -1
+1) "e"
+2) "a"
+3) "b"
+4) "c"
+5) "d"
+6) "bar"
+7) "foo"
+127.0.0.1:6379> ZADD myset 9 foobar
+(integer) 1
+127.0.0.1:6379> ZRANGE myset 0 -1
+1) "e"
+2) "a"
+3) "b"
+4) "c"
+5) "d"
+6) "bar"
+7) "foobar"
+8) "foo"
+127.0.0.1:6379>
+
+Note: 
+ sorting happens based "score" values, incase scores are same, then redis sorts according to
+ ordered lexicographically of values.
+
+Note: Most of the Sort apis available inside Sorted Set + Some advanced apis also , which is based on scores and ranks.
+/////////////////////////////////////////////////////////////////////////////////////////////
+				Transactions
+//////////////////////////////////////////////////////////////////////////////////////////////
+
+  Grouping set of commands as a single unit of execution called transaction.
+
+IN rdbms
+ COMMIT  - ALL Success
+ rollback - revert
+
+Sequences of commands you can send
+
+ MULTI
+ EXEC
+ DISCARD
+
+Transaction will be enabled with more than one connections or single connection.
+
+
+Commands work flow in redis:
+
+General workflow
+
+ SET a 10--------sends--to---redisserver-----|receive command --Execute---Return  status
+
+ 127.0.0.1:6379> SET counter 0
+OK -Response
+
+Transaction work flow:
+.......................
+
+ In transactions commands wont be executed immediately, rather than , commands will be 
+ Queued.... until there signal for success.
+
+MULTI -  starts transaction
+ COMMAND 1
+ COMMAND 2
+ COMMAND 3
+--QUEUED
+EXEC- EXECUTE transactions
+
+127.0.0.1:6379> MULTI
+OK
+127.0.0.1:6379> INCR counter
+QUEUED
+127.0.0.1:6379> GET counter
+QUEUED
+127.0.0.1:6379> EXEC
+1) (integer) 1
+2) "1"
+127.0.0.1:6379>
+
+How to discard transactions? - Rollback:
+
+127.0.0.1:6379> MULTI
+OK
+127.0.0.1:6379> INCR counter
+QUEUED
+127.0.0.1:6379> INCR counter
+QUEUED
+127.0.0.1:6379> INCRBY counter 10
+QUEUED
+127.0.0.1:6379> DISCARD
+OK
+127.0.0.1:6379> GET counter
+"1"
+127.0.0.1:6379>
+//////////////////////////////////////////////////////////////////////////////////////////////                              Redis and Java
+.............................................................................................
+
+Java provides two major libs
+
+1.jedis
+2.Lettuce
+
+Java and Reactive Programming : RXJAVA,Reactor
+
+
+Lettuce:
+
+It is advanced redis wrapper.
+
+-Reactive,functional style wrapper.
+
+Redis can be connected in non blocking and reactive.
+
+Where lettuce helps to connect and query redis in async and nonblocking way.
+
+if you are going to use jedis / lettuce, in java program.
+
+///////////////////////////////////////////////////////////////////////////////////////////
+
+Create simple maven project
+
+    <dependency>
+        <groupId>redis.clients</groupId>
+        <artifactId>jedis</artifactId>
+        <version>2.10.2</version>
+        <type>jar</type>
+        <scope>compile</scope>
+    </dependency>
+
+
+HelloRedis.java
+package com.redis.hello;
+
+import redis.clients.jedis.Jedis;
+
+public class HelloRedis {
+    public static void main(String[] args) {
+        Jedis jedis = new Jedis("localhost", 6379);
+        System.out.println(jedis.ping());
+        System.out.println(jedis.ping("Hello Redis!!!"));
+
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////
+
+How to use Strings:
+
+27.0.0.1:6379> SET article:12345:headlines "Redis is the fastest Datastore"
+OK
+127.0.0.1:6379> SET article:60056:headlines "Redis is best for indexing"
+OK
+127.0.0.1:6379> SET article:10001:headlines "Redis is best for caching"
+OK
+127.0.0.1:6379> SET article:12345:headlines "Redis is the fastest Datastore"
+OK
+
+package com.redis.strings;
+
+import redis.clients.jedis.Jedis;
+
+import java.util.List;
+
+class VotingSystem {
+    private Jedis jedis;
+
+    VotingSystem(Jedis jedis) {
+        this.jedis = jedis;
+    }
+
+    public void upVote(int id) {
+        String key = "article:" + id + ":votes";
+        jedis.incr(key);
+
+    }
+
+    public void downVote(int id) { // 1
+        String key = "article:" + id + ":votes"; // 2
+        jedis.decr(key); // 3
+    }
+
+    public void showResults(int id) {
+        String headlineKey = "article:" + id + ":headlines";
+        String voteKey = "article:" + id + ":votes";
+        List<String> keys = jedis.mget(headlineKey, voteKey);
+        keys.forEach(System.out::println);
+    }
+}
+
+public class RedisStrings {
+    public static void main(String[] args) {
+        Jedis jedis = new Jedis("localhost");
+        jedis.set("name", "subramanian");
+        System.out.println(jedis.get("name"));
+        System.out.println(jedis.get("counter"));
+        VotingSystem votingSystem = new VotingSystem(jedis);
+        votingSystem.upVote(12345); // article:12345 has 1 vote
+        votingSystem.upVote(12345); // article:12345 has 2 votes
+        votingSystem.upVote(12345); // article:12345 has 3 votes
+        votingSystem.upVote(10001); // article:10001 has 1 vote
+        votingSystem.upVote(10001); // article:10001 has 2 votes
+       // votingSystem.downVote(10001); // article:10001 has 1 vote
+        votingSystem.upVote(60056); // article:60056 has 1 vote
+        votingSystem.showResults(12345);
+        votingSystem.showResults(10001);
+        votingSystem.showResults(60056);
+
+    }
+}
+//////////////////////////////////////////////////////////////////////////////////////////////
+
+How to dealwith List?
+
+package com.redis.list;
+
+import redis.clients.jedis.Jedis;
+
+public class ListRedis {
+    public static void main(String[] args) {
+        Jedis jedis = new Jedis("localhost");
+        jedis.lpush("mylist", "1");
+        jedis.lpush("mylist", "2");
+        jedis.lpush("mylist", "3");
+        jedis.lpush("mylist", "4");
+        jedis.lpush("mylist", "5");
+        jedis.lrange("mylist", 0, 10).forEach(System.out::println);
+    }
+}
+//////////////////////////////////////////////////////////////////////////////////////////////
+
+                               Spring Boot + Redis Integration
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+Spring Boot Provides an abstraction for redis
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-redis</artifactId>
+    </dependency>
+
+Spring Boot provides a high level abstraction apis to talk to redis, in order to talk to Redis
+we need drivers -  Jedis,Lettuce.
+
+
+                                    Spring Boot Redis
+					   |
+			---------------------------------------------
+                        |                                           |
+                     Jedis                                      Lettuce
 
 
 
+Connecting Redis:
+
+org.springframework.data.redis.connection package contains redis related api.
 
 
+api:
+
+RedisConnection:
+
+-Provides the core building block for redis communication.
+-It handles the communication with the redis back end.
+-It also automatically translates the underlying connections exections to Spring consistentent DAO  Exception
+-RedisConnection uses tcp channel to send and recevice data.
+
+How to create RedisConnection?
+
+  RedisConnection is interface,its implementations are provided by implemenation classes.
+
+Implementation classes provided by low level java libs 
+   -jedis, lettuce.
 
 
+Spring comunnicates jedis/lettuce to get low level communcation.
+
+Spring abstracts even getting connection information from the libs..
+
+				RedisConnection
+					|
+			---------------------------------------------- RedisConnectionFactory
+                       JedisConnection                LettuceConnection
 
 
+RedisConnectionFactory:
+
+ -It is factory class/bean used to create Redis active connections.
+
+RedisConnectionFactory internally uses JeddisConnectionFactory or LettuceConnectionFactory
+...........................................................................................
 
 
+How to create ConnectionFactory/How to configure Connection factory:
+
+Through @Configuration and @Bean annotation.
+
+package com.tiaa.redis;
+
+import lombok.extern.java.Log;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+
+@Configuration
+@Log
+public class AppConfig {
+    //connections
+    @Bean
+    public LettuceConnectionFactory lettuceConnectionFactory() {
+        RedisStandaloneConfiguration configuration = new RedisStandaloneConfiguration();
+        configuration.setHostName("localhost");
+        configuration.setPort(6379);
+        log.info("connection factory is initalized : LettuceConnectionFactory ");
+        return new LettuceConnectionFactory(configuration);
+    }
+
+    //jedis configuration
+//    @Bean
+//    public JedisConnectionFactory jedisConnectionFactory() {
+//        RedisStandaloneConfiguration configuration = new RedisStandaloneConfiguration();
+//        configuration.setHostName("localhost");
+//        configuration.setPort(6379);
+//        log.info("connection factory is initalized : JedisConnectionFactory ");
+//
+//        return new JedisConnectionFactory(configuration);
+//    }
+}
+////////////////////////////////////////////////////////////////////////////////////////////
+
+&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+
+RedisTemplate:
 
 
+RedisTemplate looks like other templating arch in spring.
+
+In fact, the Templates are high level abstraction for application level communication.
+
+eg:jdbcTemplate,jpaTemplate,restTemplate.......
 
 
+RedisTemplate:
+............
+-The template offers a high-level abstraction for redis interaction.
+ Where redis connection offers low level methods that accept and return binary values-byte arrays.
+
+Seralization and Deseralization:
+
+-Template takes cares of seralization,deseralization ,and connection managment.
+-template sends commands  to redis server looks like redis command list.
+
+RedisTemplate offers Operational Views:
+
+RedisTemplate offers Operational Views:
+
+-String Operations.
+
+ OperationalView Api
+
+ template.ValueOperations ----Template<Key,Value>
+ 
+SetOperations
+ZsetOperations
+GeoOperations
+ListOperations
+SetOperations
+//////////////////////////////////////////////////////////////////////////////////////////
+
+How to use apis?
+
+  @Autowired
+  private StringRedisTemplate redisTemplate
+
+  redisTemplate.opsForList().leftPush(userId, url.toExternalForm());
+
+////////////////////////////////////////////////////////////////////////////////////////////
+
+You can add configuration properties via application.yaml /properties
+
+spring.redis.host
+//////////////////////////////////////////////////////////////////////////////////////////
+
+CURD App using Redis:
+
+pom.xml
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>redis.clients</groupId>
+			<artifactId>jedis</artifactId>
+			<version>3.3.0</version>
+		</dependency>
+
+////////////////////////////////////////////////////////////////////////////////////////////
+
+RedisConnectionFactory Configuration:
+
+@Configuration
+public class RedisConfig {
+
+    @Bean
+    public JedisConnectionFactory jedisConnectionFactory() {
+        RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration();
+        redisStandaloneConfiguration.setHostName("127.0.0.1");
+        redisStandaloneConfiguration.setPort(6379);
+        //redisStandaloneConfiguration.setPassword("password");
+
+        JedisConnectionFactory jedisConnectionFactory = new JedisConnectionFactory(redisStandaloneConfiguration);
+        return  jedisConnectionFactory;
+    }
+
+    @Bean
+    public RedisTemplate<String, Object> redisTemplate() {
+        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
+        redisTemplate.setConnectionFactory(jedisConnectionFactory());
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
+        redisTemplate.setHashKeySerializer(new JdkSerializationRedisSerializer());
+        redisTemplate.setValueSerializer(new JdkSerializationRedisSerializer());
+        redisTemplate.setEnableTransactionSupport(true);
+        redisTemplate.afterPropertiesSet();
+        return redisTemplate;
+    }
+}
+////////////////////////////////////////////////////////////////////////////////////////////
+
+Enity:
+ It must implement Serializable interface
+.....................................................................................
+
+import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.io.Serializable;
+
+public class User implements Serializable {
+
+    private Long id;
+    private String firstName;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public String getEmailId() {
+        return emailId;
+    }
+
+    public void setEmailId(String emailId) {
+        this.emailId = emailId;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+
+    private String lastName;
+    private String emailId;
+    private int age;
+
+}
+
+//////////////////////////////////////////////////////////////////////////////////
+
+DAO class:
+..........
+
+public interface UserDao {
+    boolean saveUser(User user);
+
+    List<User> fetchAllUser();
+
+    User fetchUserById(Long id);
+
+    boolean deleteUser(Long id);
+
+    boolean updateUser(Long id, User user);
+}
+import com.dailycodebuffer.model.User;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public class UserDaoImpl implements UserDao {
+
+    @Autowired
+    private RedisTemplate redisTemplate;
+
+    private static final String KEY = "USER";
+
+    @Override
+    public boolean saveUser(User user) {
+        try {
+            redisTemplate.opsForHash().put(KEY, user.getId().toString(), user);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    @Override
+    public List<User> fetchAllUser() {
+        List<User> users;
+        users = redisTemplate.opsForHash().values(KEY);
+        return  users;
+    }
+
+    @Override
+    public User fetchUserById(Long id) {
+        User user;
+        user = (User) redisTemplate.opsForHash().get(KEY,id.toString());
+        return user;
+    }
+
+    @Override
+    public boolean deleteUser(Long id) {
+        try {
+            redisTemplate.opsForHash().delete(KEY,id.toString());
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    @Override
+    public boolean updateUser(Long id, User user) {
+        try {
+            redisTemplate.opsForHash().put(KEY, id, user);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+Service
+import com.dailycodebuffer.model.User;
+
+import java.util.List;
+
+public interface UserService {
+
+    boolean saveUser(User user);
+
+    List<User> fetchAllUser();
+
+    User fetchUserById(Long id);
+
+    boolean deleteUser(Long id);
+
+    boolean updateUser(Long id, User user);
+}
+Service
+public class UserServiceImpl implements UserService {
+
+    @Autowired
+    private UserDao userDao;
+
+    @Override
+    public boolean saveUser(User user) {
+        return userDao.saveUser(user);
+    }
+
+    @Override
+    public List<User> fetchAllUser() {
+        return userDao.fetchAllUser();
+    }
+
+    @Override
+    public User fetchUserById(Long id) {
+        return userDao.fetchUserById(id);
+    }
+
+    @Override
+    public boolean deleteUser(Long id) {
+        return userDao.deleteUser(id);
+    }
+
+    @Override
+    public boolean updateUser(Long id, User user) {
+        return userDao.updateUser(id,user);
+    }
+}
+/////////////////////////////////////
+API : Controllr
+
+import com.dailycodebuffer.model.User;
+import com.dailycodebuffer.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+public class UserController {
+
+    @Autowired
+    private UserService userService;
+
+    @PostMapping("/user")
+    public ResponseEntity<String> saveUser(@RequestBody User user) {
+        boolean result = userService.saveUser(user);
+        if(result)
+            return ResponseEntity.ok("User Created Successfully!!");
+        else
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    }
+
+    @GetMapping("/user")
+    public ResponseEntity<List<User>> fetchAllUser() {
+        List<User> users;
+        users = userService.fetchAllUser();
+        return ResponseEntity.ok(users);
+    }
+
+    @GetMapping("/user/{id}")
+    public ResponseEntity<User> fetchUserById(@PathVariable("id") Long id) {
+        User user;
+        user = userService.fetchUserById(id);
+        return ResponseEntity.ok(user);
+    }
+
+    @DeleteMapping("/user/{id}")
+    public ResponseEntity<String> deleteUser(@PathVariable("id") Long id) {
+        boolean result = userService.deleteUser(id);
+        if(result)
+            return ResponseEntity.ok("User deleted Successfully!!");
+        else
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    }
+
+    @PutMapping("/user/{id}")
+    public ResponseEntity<String> updateUser(@PathVariable("id") Long id, @RequestBody User user) {
+        boolean result = userService.updateUser(id,user);
+        if(result)
+            return ResponseEntity.ok("User Updated Successfully!!");
+        else
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    }
+}
+//////////////////////////////////////////////////////////////////////////////////////////////
+
+How to Use Redis as Provider?
+.............................
+
+       <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+Redis and Cache Configuration:
+
+1.Via code - @Configuration
+2.Via PropertySource -application.properties/yaml
+
+# Redis Config
+
+spring.cache.type=redis
+
+spring.cache.redis.cache-null-values=false
+
+spring.cache.use-key-prefix=true
+
+spring.cache.key=books
+
+spring.cache.time-to-live=60000
+
+spring.redis.host=localhost
+
+spring.redis.timeout=10000
+
+spring.redis.port=6379
+
+server.port=8081
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+Entity should implement serializable
+.....................................
+
+@Entity
+public class Book implements  Serializable {
+    private static final long serialVersionUID = 1307525040224585678L;
+    @Id
+    @GeneratedValue
+    private long id;
+    private String name;
+    private String category;
+    private String author;
+    private String publisher;
+    private String edition;
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(String author) {
+        this.author = author;
+    }
+
+    public String getPublisher() {
+        return publisher;
+    }
+
+    public void setPublisher(String publisher) {
+        this.publisher = publisher;
+    }
+
+    public String getEdition() {
+        return edition;
+    }
+
+    public void setEdition(String edition) {
+        this.edition = edition;
+    }
+
+    @Override
+    public String toString() {
+        return "Book{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", category='" + category + '\'' +
+                ", author='" + author + '\'' +
+                ", publisher='" + publisher + '\'' +
+                ", edition='" + edition + '\'' +
+                '}';
+    }
+}
+/////////////////////////////&&&&&&&&&&&&&&&&&&&&&&&///////////////////////////////////////
+
+Advanced Topics:
+...............
+
+0.How to Start server
+  -with configuration
+ -redis.conf
+
+1.Persistance
+2.Replication : Scalability - Master/Slave Arch.
+3.High Availablity And Data Distribution across nodes
+   -Partiation
+   -Cluster
+   -Sentinal
+4.Security
+   -Client side 
+   -ACL - Authentication
+   -TSL
+5.Monitoring tools
 
 
+1.Persistance:
+ -Save redis inmemory data into disk , in the disk file - dump.rdb or dump.aof
+
+save 900 1
+save 300 10
+save 60 10000
+
+When to take backup.
+ 
+///////////////////////////////////////////////////////////////////////////////////////////
+
+Replication:
+
+->Scalability
+->Master-slave arch
+->write operations into masters
+->read operations from replicas/slaves
+->replication is async
+
+Here demo , i am going to use docker-compose; because , we need to run multiple redis-severs
+we need to communicates.
+
+->docker networker bridge
+
+IS There any GUI tool for redis-cli - redis-labs -dashbord, redis-commandar-node.js based tool.
 
 
+docker-compose.yml
+version: '3'
+services:
+  master:
+    container_name: master
+    image: redis
+    ports:
+      - 6379:6379
+  slave-1:
+    container_name: slave-1
+    image: redis
+    ports:
+      - 16379:6379
+    volumes:
+      - ./conf:/usr/local/etc/redis/
+    command: redis-server /usr/local/etc/redis/redis.conf
+  slave-2:
+    container_name: slave-2
+    image: redis
+    ports:
+      - 26379:6379
+    volumes:
+      - ./conf:/usr/local/etc/redis/
+    command: redis-server /usr/local/etc/redis/redis.conf    
+  redis-commander:
+    container_name: redis-commander
+    hostname: redis-commander
+    image: rediscommander/redis-commander:latest
+    restart: always
+    environment:
+    - REDIS_HOSTS=master:master,slave-1:slave-1,slave-2:slave-2
+    ports:
+    - 8081:8081
+
+>docker-compose up
 
 
+Spring Boot - master-slave communication:
+
+application.yaml
+redis:
+  master:
+    host: localhost
+    port: 6379
+  slaves:
+    - host: localhost
+      port: 16379
+    - host: localhost
+      port: 26379
 
 
+Configuration:
+package com.vinsguru.redismasterslave.config;
 
 
+import io.lettuce.core.ReadFrom;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.RedisStaticMasterReplicaConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 
+import java.util.List;
 
+@Configuration
+@ConfigurationProperties(prefix = "redis")
+public class RedisConfiguration {
 
+    private RedisInstance master;
+    private List<RedisInstance> slaves;
 
+    RedisInstance getMaster() {
+        return master;
+    }
 
+    void setMaster(RedisInstance master) {
+        this.master = master;
+    }
 
+    List<RedisInstance> getSlaves() {
+        return slaves;
+    }
 
+    void setSlaves(List<RedisInstance> slaves) {
+        this.slaves = slaves;
+    }
 
+    @Bean
+    public LettuceConnectionFactory redisConnectionFactory() {
+        LettuceClientConfiguration clientConfig = LettuceClientConfiguration.builder()
+                .readFrom(ReadFrom.REPLICA_PREFERRED)
+                .build();
+        RedisStaticMasterReplicaConfiguration staticMasterReplicaConfiguration = new RedisStaticMasterReplicaConfiguration(this.getMaster().getHost(), this.getMaster().getPort());
+        this.getSlaves().forEach(slave -> staticMasterReplicaConfiguration.addNode(slave.getHost(), slave.getPort()));
+        return new LettuceConnectionFactory(staticMasterReplicaConfiguration, clientConfig);
+    }
 
+    private static class RedisInstance {
 
+        private String host;
+        private int port;
 
+        String getHost() {
+            return host;
+        }
 
+        void setHost(String host) {
+            this.host = host;
+        }
 
+        int getPort() {
+            return port;
+        }
 
+        void setPort(int port) {
+            this.port = port;
+        }
+    }
 
+}
+///////////////////////////////////////////////////////////////////////////////////////////
 
+Controller
+package com.vinsguru.redismasterslave.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Set;
+
+@RestController
+public class RedisController {
+
+    private static final String KEY = "dummy";
+
+    @Autowired
+    private StringRedisTemplate template;
+
+    @GetMapping("/{name}")
+    public void addToSet(@PathVariable String name) {
+        this.template.opsForValue().set(KEY,name);
+    }
+
+    @GetMapping("/get")
+    public Set<String> getKeyValues() {
+        return this.template.opsForSet().members(KEY);
+    }
+
+}
+//////////////////////////////////////////////////***********************************/////////
 
 
 

@@ -1,0 +1,137 @@
+Redis Cluster setup Using Docker:
+
+Steps 1 : Use Cluster-script 
+
+create-redis-cluster.sh
+
+#------------ bootstrap the cluster nodes --------------------
+
+start_cmd='redis-server --port 6379 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes'
+redis_image='redis'
+network_name='redis_cluster_net'
+
+docker network create $network_name
+echo $network_name " created"
+
+#---------- create the cluster ------------------------
+
+for port in `seq 6379 6384`; do \
+ docker run -d --name "redis-"$port -p $port:6379 --net $network_name $redis_image $start_cmd;
+ echo "created redis cluster node redis-"$port
+done
+
+cluster_hosts=''
+
+for port in `seq 6379 6384`; do \
+ hostip=`docker inspect -f '{{(index .NetworkSettings.Networks "redis_cluster_net").IPAddress}}' "redis-"$port`;
+ echo "IP for cluster node redis-"$port "is" $hostip
+ cluster_hosts="$cluster_hosts$hostip:6379 ";
+done
+
+echo "cluster hosts "$cluster_hosts
+echo "creating cluster...."
+echo 'yes' | docker run -i --rm --net $network_name $redis_image redis-cli --cluster create $cluster_hosts --cluster-replicas 1;
+
+
+Step 2 : 
+sasub@LAPTOP-R2TGGFDL MINGW64 /c/Windows/system32
+$ cd C:/session/TIAA/Batch-2
+
+sasub@LAPTOP-R2TGGFDL MINGW64 /c/session/TIAA/Batch-2 (main)
+$ pwd                                                                                                                /c/session/TIAA/Batch-2
+
+sasub@LAPTOP-R2TGGFDL MINGW64 /c/session/TIAA/Batch-2 (main)
+$ ls
+SpringBoot-Caching-Redis-Notes.txt  create-redis-cluster.sh  mycache-app  sampleredisapp
+
+$ bash create-redis-cluster.sh
+
+ffbdb5d2949a0fe2d4e48d68cc54889f61403a81162c2e5acf001dd5bbf4e334
+redis_cluster_net  created
+35b764de22dc9cdce1f0fd30d519e6312de146a7c955720e94f714bce551c766
+created redis cluster node redis-6379
+ac75f522312eda9e5e5ad72d10392ab4f158689dd687ef9dcc2bd7ccd943060b
+created redis cluster node redis-6380
+ed6d9cfab22d1d633a8cbd567157a5d9503a33577bff5edd175d062f31794578
+created redis cluster node redis-6381
+98c83bd43496631205c145fd33fb2f97e6bc196b246ae7d1f874118ef2ea4d4f
+created redis cluster node redis-6382
+85b36f5dfc8762e7b796ea0665800be82019e19ad0889c90737591d47bc9fb02
+created redis cluster node redis-6383
+0bd434af72066ef92bad94bf9f3d9a01b60bc32b53f0d9f320e845660d5e22d9
+created redis cluster node redis-6384
+IP for cluster node redis-6379 is 172.18.0.2
+IP for cluster node redis-6380 is 172.18.0.3
+IP for cluster node redis-6381 is 172.18.0.4
+IP for cluster node redis-6382 is 172.18.0.5
+IP for cluster node redis-6383 is 172.18.0.6
+IP for cluster node redis-6384 is 172.18.0.7
+cluster hosts 172.18.0.2:6379 172.18.0.3:6379 172.18.0.4:6379 172.18.0.5:6379 172.18.0.6:6379 172.18.0.7:6379
+creating cluster....
+>>> Performing hash slots allocation on 6 nodes...
+Master[0] -> Slots 0 - 5460
+Master[1] -> Slots 5461 - 10922
+Master[2] -> Slots 10923 - 16383
+Adding replica 172.18.0.6:6379 to 172.18.0.2:6379
+Adding replica 172.18.0.7:6379 to 172.18.0.3:6379
+Adding replica 172.18.0.5:6379 to 172.18.0.4:6379
+M: d52501d3ab78442e71135a83eda3d92eb5be9cd0 172.18.0.2:6379
+   slots:[0-5460] (5461 slots) master
+M: 7e24b46a3eed783cea26812f410c815d023b67a1 172.18.0.3:6379
+   slots:[5461-10922] (5462 slots) master
+M: 76e736fa9079c05a7832c529fde664edbee459b8 172.18.0.4:6379
+   slots:[10923-16383] (5461 slots) master
+S: d84bd00a5b77e71274d79bebdc9e7fdca31335ac 172.18.0.5:6379
+   replicates 76e736fa9079c05a7832c529fde664edbee459b8
+S: 9792e21680f8c1ae888502c60809ea8ca18f1b29 172.18.0.6:6379
+   replicates d52501d3ab78442e71135a83eda3d92eb5be9cd0
+S: 17a4457317f89b1ee208b8a7e0f68cd287b67c66 172.18.0.7:6379
+   replicates 7e24b46a3eed783cea26812f410c815d023b67a1
+Can I set the above configuration? (type 'yes' to accept): >>> Nodes configuration updated
+>>> Assign a different config epoch to each node
+>>> Sending CLUSTER MEET messages to join the cluster
+Waiting for the cluster to join
+...
+>>> Performing Cluster Check (using node 172.18.0.2:6379)
+M: d52501d3ab78442e71135a83eda3d92eb5be9cd0 172.18.0.2:6379
+   slots:[0-5460] (5461 slots) master
+   1 additional replica(s)
+S: 9792e21680f8c1ae888502c60809ea8ca18f1b29 172.18.0.6:6379
+   slots: (0 slots) slave
+   replicates d52501d3ab78442e71135a83eda3d92eb5be9cd0
+M: 76e736fa9079c05a7832c529fde664edbee459b8 172.18.0.4:6379
+   slots:[10923-16383] (5461 slots) master
+   1 additional replica(s)
+S: 17a4457317f89b1ee208b8a7e0f68cd287b67c66 172.18.0.7:6379
+   slots: (0 slots) slave
+   replicates 7e24b46a3eed783cea26812f410c815d023b67a1
+M: 7e24b46a3eed783cea26812f410c815d023b67a1 172.18.0.3:6379
+   slots:[5461-10922] (5462 slots) master
+   1 additional replica(s)
+S: d84bd00a5b77e71274d79bebdc9e7fdca31335ac 172.18.0.5:6379
+   slots: (0 slots) slave
+   replicates 76e736fa9079c05a7832c529fde664edbee459b8
+[OK] All nodes agree about slots configuration.
+>>> Check for open slots...
+>>> Check slots coverage...
+[OK] All 16384 slots covered.
+
+
+
+Step 2 : connect to redis-cli
+
+sudo docker exec -it redis-6379 sh
+$redis-cli -c -h 172.19.0.7
+
+
+172.19.0.7:6379> set a 10
+-> Redirected to slot [15495] located at 172.19.0.4:6379
+OK
+172.19.0.4:6379> get a
+"10"
+172.19.0.4:6379> set b 20
+-> Redirected to slot [3300] located at 172.19.0.2:6379
+OK
+172.19.0.4:6379> get b
+-> Redirected to slot [3300] located at 172.19.0.2:6379
+"20"
